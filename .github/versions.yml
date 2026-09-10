@@ -1,0 +1,8 @@
+# Version map: TypeScript package -> Reference implementation
+# Used by workflow automation to track upstream reference versions.
+packages:
+  uniform-resources:
+    npm: "@blockchaincommons/uniform-resources"
+    repo: "BlockchainCommons/bc-ur-rust"
+    version: "0.19.2"
+    commit: "2f8b4e728945f9dc248eba71911b89371f076924"
