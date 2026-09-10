@@ -320,7 +320,7 @@ function createBytewordsMap(): Map<string, number> {
   return map;
 }
 
-export const BYTEWORDS_MAP = createBytewordsMap();
+export const BYTEWORDS_MAP: Map<string, number> = createBytewordsMap();
 
 /**
  * Bytemojis for encoding/decoding bytes as emojis.
@@ -722,7 +722,7 @@ function createMinimalBytewordsMap(): Map<string, number> {
   return map;
 }
 
-export const MINIMAL_BYTEWORDS_MAP = createMinimalBytewordsMap();
+export const MINIMAL_BYTEWORDS_MAP: Map<string, number> = createMinimalBytewordsMap();
 
 /**
  * Set of all 256 bytemojis for fast membership testing. Backs

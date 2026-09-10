@@ -27,7 +27,12 @@ import {
   urFromEncodable,
   urStringFromEncodable,
 } from "../src";
-import { cbor, createTag, createTaggedCbor, type CborTaggedEncodable } from "@blockchaincommons/dcbor-compat";
+import {
+  cbor,
+  createTag,
+  createTaggedCbor,
+  type CborTaggedEncodable,
+} from "@blockchaincommons/dcbor-compat";
 
 // Import internal utilities for testing internal functionality
 // These are NOT part of the public API but needed for internal tests
