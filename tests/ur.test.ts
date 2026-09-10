@@ -11,6 +11,7 @@ import {
   type CborCodec,
   expectText,
   expectTaggedContent,
+  asTaggedValue,
 } from "@blockchaincommons/dcbor";
 import {
   UR,
@@ -285,5 +286,18 @@ describe("dcbor bridge", () => {
       "UnexpectedType",
     );
     expect(hex(decodeCbor(encodeCbor(new Leaf("x").toCbor())).toData())).toBe("d8c96178");
+  });
+  it("decodeURWith accepts a UR named after any of the codec's tags", () => {
+    const codec: CborCodec<string> = {
+      tags: [LEAF, Tag.from(202, "other")],
+      decode: (c) => {
+        const tv = asTaggedValue(c);
+        return `${String(tv?.[0].value)}:${expectText(tv?.[1] ?? c)}`;
+      },
+      encode: (v) => cbor(v),
+    };
+    expect(decodeURWith(UR.parse("ur:leaf/iejyihjkjygupyltla"), codec)).toBe("201:test");
+    expect(decodeURWith(UR.from("other", cbor("test")), codec)).toBe("202:test");
+    expect(code(() => decodeURWith(UR.from("third", cbor("test")), codec))).toBe("UnexpectedType");
   });
 });

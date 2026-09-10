@@ -35,10 +35,14 @@ export function urFor(value: ToCbor & CborTagged): UR {
  * @throws {URError} `UnexpectedType` when the UR's type is not the codec's.
  */
 export function decodeURWith<T>(ur: UR, codec: CborCodec<T>): T {
-  const tag = codec.tags?.[0];
-  if (tag === undefined) throw new Error("decodeURWith: codec has no tags");
-  if (tag.name === undefined)
-    throw new Error(`CBOR tag ${tag.value} must have a name; register the tags first`);
-  ur.expectType(tag.name);
+  const first = codec.tags?.[0];
+  if (first === undefined) throw new Error("decodeURWith: codec has no tags");
+  if (first.name === undefined)
+    throw new Error(`CBOR tag ${first.value} must have a name; register the tags first`);
+  // A codec that carries several tags (a type with a legacy tag, or one
+  // that dispatches on the tag) accepts a UR named after any of them; the
+  // matching tag wraps the content so the codec sees the tagged form.
+  const tag = codec.tags?.find((t) => t.name === ur.type.name) ?? first;
+  ur.expectType(tag.name ?? first.name);
   return codec.decode(taggedValue(tag, ur.cbor));
 }

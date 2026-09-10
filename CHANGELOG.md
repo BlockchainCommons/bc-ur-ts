@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `decodeURWith` accepts a UR named after any of the codec's tags (a type with a legacy tag, or one that dispatches on the tag), wrapping the content in the matching tag.
+
 ## 1.0.0-beta.1
 
 Extracted from the [`paritytech/bcts`](https://github.com/paritytech/bcts)
