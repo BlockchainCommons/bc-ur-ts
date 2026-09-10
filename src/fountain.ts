@@ -1,484 +1,296 @@
 /**
- * Copyright © 2023-2026 Blockchain Commons, LLC
- * Copyright © 2025-2026 Parity Technologies
+ * The Luby-transform fountain code behind multipart URs: a message is cut
+ * into equal fragments, each part XORs a pseudo-random subset of them
+ * (chosen from a xoshiro stream seeded by the part number and the message
+ * checksum), and a decoder recovers the fragments by peeling.
  *
- *
- * Fountain code implementation for multipart URs.
- *
- * This implements a hybrid fixed-rate and rateless fountain code system
- * as specified in BCR-2020-005 and BCR-2024-001.
- *
- * Key concepts:
- * - Parts 1-seqLen are "pure" fragments (fixed-rate)
- * - Parts > seqLen are "mixed" fragments using XOR (rateless)
- * - Xoshiro256** PRNG ensures encoder/decoder agree on mixing
+ * @module @blockchaincommons/uniform-resources/fountain
  */
+import { crc32 } from "@blockchaincommons/crypto";
+import {
+  encodeCbor,
+  decodeCbor,
+  expectArray,
+  expectBytes,
+  expectUnsigned,
+} from "@blockchaincommons/dcbor";
+import { URError } from "./error.js";
+import { Xoshiro256, seedFor } from "./xoshiro.js";
 
-import { Xoshiro256, createSeed } from "./xoshiro.js";
-import { crc32 } from "./utils.js";
-
-/**
- * Represents a fountain code part with metadata.
- */
+/** One part of a fountain-coded message; the CBOR array `[seqNum, seqLen, messageLen, checksum, data]` on the wire. */
 export interface FountainPart {
-  /** Sequence number (1-based) */
-  seqNum: number;
-  /** Total number of pure fragments */
-  seqLen: number;
-  /** Length of original message */
-  messageLen: number;
-  /** CRC32 checksum of original message */
-  checksum: number;
-  /** Fragment data */
-  data: Uint8Array;
+  readonly seqNum: number;
+  readonly seqLen: number;
+  readonly messageLen: number;
+  readonly checksum: number;
+  readonly data: Uint8Array;
 }
 
-/**
- * Calculates the quotient of `a` and `b`, rounded toward positive infinity.
- *
- * Mirrors Rust `ur-0.4.1/src/fountain.rs::div_ceil`.
- */
-function divCeil(a: number, b: number): number {
-  const d = Math.floor(a / b);
-  const r = a % b;
-  return r > 0 ? d + 1 : d;
-}
+const divCeil = (a: number, b: number): number => Math.floor(a / b) + (a % b > 0 ? 1 : 0);
 
-/**
- * Computes the optimal fragment length for a given message length and
- * maximum fragment length.
- *
- * The algorithm:
- *   fragment_count  = ceil(data_length / max_fragment_length)
- *   fragment_length = ceil(data_length / fragment_count)
- *
- * This produces fragments that are as balanced as possible while still
- * respecting `maxFragmentLen` as an upper bound on each fragment. For
- * example, a 10-byte message with `maxFragmentLen = 6` yields a fragment
- * length of 5 (so two even 5-byte fragments) rather than 6 (one full
- * fragment plus a 4-byte tail).
- *
- * Mirrors Rust `ur-0.4.1/src/fountain.rs::fragment_length` byte-for-byte.
- */
+/** The fragment length that cuts `dataLength` into the fewest fragments of at most `maxFragmentLength`, evenly. */
 export function fragmentLength(dataLength: number, maxFragmentLength: number): number {
-  const fragmentCount = divCeil(dataLength, maxFragmentLength);
-  return divCeil(dataLength, fragmentCount);
+  return divCeil(dataLength, divCeil(dataLength, maxFragmentLength));
 }
 
-/**
- * Splits `data` into a list of `fragmentLen`-sized chunks, zero-padding
- * the last chunk if necessary so that every chunk is exactly
- * `fragmentLen` bytes long.
- *
- * Note: `fragmentLen` is the **already-computed** fragment length (see
- * {@link fragmentLength}), not the user-facing maximum fragment length.
- *
- * Mirrors Rust `ur-0.4.1/src/fountain.rs::partition` byte-for-byte.
- */
-export function partition(data: Uint8Array, fragmentLen: number): Uint8Array[] {
-  if (fragmentLen < 1) {
-    throw new Error("fragment length must be at least 1");
-  }
-  const remainder = data.length % fragmentLen;
-  const padding = remainder === 0 ? 0 : fragmentLen - remainder;
-  const padded = new Uint8Array(data.length + padding);
-  padded.set(data);
-  // Trailing bytes are already zero by Uint8Array's default initialization.
-
-  const fragments: Uint8Array[] = [];
-  for (let start = 0; start < padded.length; start += fragmentLen) {
-    fragments.push(padded.slice(start, start + fragmentLen));
+/** Cut `data` into `fragmentLength`-byte fragments, zero-padding the last. @throws {RangeError} */
+export function partition(data: Uint8Array, fragmentLen: number): Uint8Array<ArrayBuffer>[] {
+  if (fragmentLen < 1) throw new RangeError("fragment length must be at least 1");
+  const count = divCeil(data.length, fragmentLen);
+  const fragments: Uint8Array<ArrayBuffer>[] = [];
+  for (let i = 0; i < count; i++) {
+    const f = new Uint8Array(fragmentLen);
+    f.set(data.subarray(i * fragmentLen, (i + 1) * fragmentLen));
+    fragments.push(f);
   }
   return fragments;
 }
 
-/**
- * Convenience: compute the optimal fragment length for `message` given
- * `maxFragmentLen` and partition the message into that many fragments.
- *
- * Equivalent to:
- * ```ts
- * partition(message, fragmentLength(message.length, maxFragmentLen))
- * ```
- *
- * This is what {@link FountainEncoder} does internally when constructing
- * its fragment table.
- */
-export function splitMessage(message: Uint8Array, maxFragmentLen: number): Uint8Array[] {
-  if (maxFragmentLen < 1) {
-    throw new Error("max fragment length must be at least 1");
-  }
-  if (message.length === 0) {
-    return [];
-  }
+/** `partition` at `fragmentLength`; an empty message has no fragments. @throws {RangeError} */
+export function splitMessage(
+  message: Uint8Array,
+  maxFragmentLen: number,
+): Uint8Array<ArrayBuffer>[] {
+  if (maxFragmentLen < 1) throw new RangeError("max fragment length must be at least 1");
+  if (message.length === 0) return [];
   return partition(message, fragmentLength(message.length, maxFragmentLen));
 }
 
-/**
- * XOR two Uint8Arrays together.
- */
-export function xorBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
-  const len = Math.max(a.length, b.length);
-  const result = new Uint8Array(len);
-
-  for (let i = 0; i < len; i++) {
-    result[i] = (a[i] ?? 0) ^ (b[i] ?? 0);
-  }
-
-  return result;
+/** `target ^= source` over `target`'s length (`source` may be shorter). */
+export function xorInto(target: Uint8Array, source: Uint8Array): void {
+  const n = Math.min(target.length, source.length);
+  for (let i = 0; i < n; i++) target[i] ^= source[i];
 }
 
-/**
- * Chooses which fragments to mix for a given sequence number.
- *
- * This uses a seeded Xoshiro256** PRNG to deterministically select fragments,
- * ensuring encoder and decoder agree without explicit coordination.
- *
- * The algorithm matches the BC-UR reference implementation:
- * 1. For pure parts (seqNum <= seqLen), return single fragment index
- * 2. For mixed parts, use weighted sampling to choose degree
- * 3. Shuffle all indices and take the first 'degree' indices
- *
- * @param seqNum - The sequence number (1-based)
- * @param seqLen - Total number of pure fragments
- * @param checksum - CRC32 checksum of the message
- * @returns Array of fragment indices (0-based)
- */
+/** The fragment indices part `seqNum` mixes: itself while `seqNum ≤ seqLen`, then a seeded random subset. */
 export function chooseFragments(seqNum: number, seqLen: number, checksum: number): number[] {
-  // Pure parts (seqNum <= seqLen) contain exactly one fragment
-  if (seqNum <= seqLen) {
-    return [seqNum - 1];
-  }
-
-  // Mixed parts use PRNG to select fragments
-  const seed = createSeed(checksum, seqNum);
-  const rng = new Xoshiro256(seed);
-
-  // Choose degree using weighted sampler (1/k distribution)
+  if (seqNum <= seqLen) return [seqNum - 1];
+  const rng = new Xoshiro256(seedFor(checksum, seqNum));
   const degree = rng.chooseDegree(seqLen);
-
-  // Create array of all indices [0, 1, 2, ..., seqLen-1]
-  const allIndices: number[] = [];
-  for (let i = 0; i < seqLen; i++) {
-    allIndices.push(i);
-  }
-
-  // Shuffle all indices and take the first 'degree' indices
-  const shuffled = rng.shuffled(allIndices);
-  return shuffled.slice(0, degree);
+  const indices = Array.from({ length: seqLen }, (_, i) => i);
+  return rng.shuffled(indices).slice(0, degree);
 }
 
-/**
- * Mixes the selected fragments using XOR.
- */
-export function mixFragments(fragments: Uint8Array[], indices: number[]): Uint8Array {
-  if (indices.length === 0) {
-    throw new Error("No fragments to mix");
-  }
-
-  let result: Uint8Array = new Uint8Array(fragments[0].length);
-
+/** XOR of the fragments at `indices`. @throws {RangeError} */
+export function mixFragments(
+  fragments: readonly Uint8Array[],
+  indices: readonly number[],
+): Uint8Array<ArrayBuffer> {
+  if (indices.length === 0) throw new RangeError("no fragments to mix");
+  const out = new Uint8Array(fragments[0].length);
   for (const index of indices) {
     const fragment = fragments[index];
-    if (fragment === undefined) {
-      throw new Error(`Fragment at index ${index} not found`);
-    }
-    result = xorBytes(result, fragment);
+    if (fragment === undefined) throw new RangeError(`fragment ${index} not found`);
+    xorInto(out, fragment);
   }
-
-  return result;
+  return out;
 }
 
-/**
- * Fountain encoder for creating multipart URs.
- */
-export class FountainEncoder {
-  private readonly fragments: Uint8Array[];
-  private readonly messageLen: number;
-  private readonly checksum: number;
-  private seqNum = 0;
+/** Encode a part as its CBOR array. */
+export function encodeFountainPart(part: FountainPart): Uint8Array<ArrayBuffer> {
+  return encodeCbor([part.seqNum, part.seqLen, part.messageLen, part.checksum, part.data]);
+}
 
-  /**
-   * Creates a fountain encoder for the given message.
-   *
-   * @param message - The message to encode
-   * @param maxFragmentLen - Maximum length of each fragment
-   *
-   * @throws if `message` is empty (mirrors Rust `Error::EmptyMessage`).
-   * @throws if `maxFragmentLen < 1` (mirrors Rust `Error::InvalidFragmentLen`).
-   */
-  constructor(message: Uint8Array, maxFragmentLen: number) {
-    if (message.length === 0) {
-      throw new Error("expected non-empty message");
-    }
-    if (maxFragmentLen < 1) {
-      throw new Error("expected positive maximum fragment length");
-    }
-
-    this.messageLen = message.length;
-    this.checksum = crc32(message);
-    // Mirrors Rust `Encoder::new`:
-    //   let fragment_length = fragment_length(message.len(), max_fragment_length);
-    //   let fragments = partition(message.to_vec(), fragment_length);
-    const optimalLen = fragmentLength(message.length, maxFragmentLen);
-    this.fragments = partition(message, optimalLen);
+/** Decode a part from its CBOR array. @throws {URError} `Decoder` */
+export function decodeFountainPart(bytes: Uint8Array): FountainPart {
+  let items: readonly unknown[];
+  try {
+    items = expectArray(decodeCbor(bytes));
+  } catch (error) {
+    throw URError.decoder("Invalid multipart data: expected CBOR array", error);
   }
-
-  /**
-   * Returns the number of pure fragments.
-   */
-  get seqLen(): number {
-    return this.fragments.length;
-  }
-
-  /**
-   * Returns whether the message fits in a single part.
-   */
-  isSinglePart(): boolean {
-    return this.fragments.length === 1;
-  }
-
-  /**
-   * Returns whether all pure parts have been emitted.
-   */
-  isComplete(): boolean {
-    return this.seqNum >= this.seqLen;
-  }
-
-  /**
-   * Generates the next fountain part.
-   */
-  nextPart(): FountainPart {
-    this.seqNum++;
-
-    const indices = chooseFragments(this.seqNum, this.seqLen, this.checksum);
-    const data = mixFragments(this.fragments, indices);
-
+  if (items.length !== 5)
+    throw URError.decoder(`Invalid multipart data: expected 5 elements, got ${items.length}`);
+  try {
+    const [a, b, c, d, e] = items as [never, never, never, never, never];
     return {
-      seqNum: this.seqNum,
-      seqLen: this.seqLen,
-      messageLen: this.messageLen,
-      checksum: this.checksum,
-      data,
+      seqNum: Number(expectUnsigned(a)),
+      seqLen: Number(expectUnsigned(b)),
+      messageLen: Number(expectUnsigned(c)),
+      checksum: Number(expectUnsigned(d)),
+      data: expectBytes(e),
+    };
+  } catch (error) {
+    throw URError.decoder("Invalid multipart data", error);
+  }
+}
+
+/** Produces parts forever; the first `partCount` are the plain fragments. */
+export class FountainEncoder implements Iterable<FountainPart> {
+  readonly #fragments: Uint8Array[];
+  readonly #messageLen: number;
+  readonly #checksum: number;
+  #seqNum = 0;
+
+  /** @throws {RangeError} for an empty message or `maxFragmentLen < 1`. */
+  constructor(message: Uint8Array, maxFragmentLen: number) {
+    if (message.length === 0) throw new RangeError("expected non-empty message");
+    if (maxFragmentLen < 1) throw new RangeError("expected positive maximum fragment length");
+    this.#messageLen = message.length;
+    this.#checksum = crc32(message);
+    this.#fragments = partition(message, fragmentLength(message.length, maxFragmentLen));
+  }
+
+  /** Number of fragments; parts beyond it are mixtures. */
+  get partCount(): number {
+    return this.#fragments.length;
+  }
+
+  /** Parts produced so far. */
+  get index(): number {
+    return this.#seqNum;
+  }
+
+  /** Whether every plain fragment has been emitted at least once. */
+  get done(): boolean {
+    return this.#seqNum >= this.#fragments.length;
+  }
+
+  get isSinglePart(): boolean {
+    return this.#fragments.length === 1;
+  }
+
+  nextPart(): FountainPart {
+    this.#seqNum++;
+    const indices = chooseFragments(this.#seqNum, this.partCount, this.#checksum);
+    return {
+      seqNum: this.#seqNum,
+      seqLen: this.partCount,
+      messageLen: this.#messageLen,
+      checksum: this.#checksum,
+      data: mixFragments(this.#fragments, indices),
     };
   }
 
-  /**
-   * Returns the current sequence number.
-   */
-  currentSeqNum(): number {
-    return this.seqNum;
+  reset(): void {
+    this.#seqNum = 0;
   }
 
-  /**
-   * Resets the encoder to start from the beginning.
-   */
-  reset(): void {
-    this.seqNum = 0;
+  *[Symbol.iterator](): Iterator<FountainPart> {
+    for (;;) yield this.nextPart();
   }
 }
 
+interface MixedPart {
+  readonly indices: readonly number[];
+  readonly data: Uint8Array;
+}
+
 /**
- * Fountain decoder for reassembling multipart URs.
+ * Reassembles a message from parts in any order. Every mixed part is kept
+ * and re-reduced whenever a plain fragment appears, so completion never
+ * needs more parts than the reference decoder.
  */
 export class FountainDecoder {
-  private seqLen: number | null = null;
-  private messageLen: number | null = null;
-  private checksum: number | null = null;
-  private fragmentLen: number | null = null;
-
-  // Storage for received data
-  private readonly pureFragments = new Map<number, Uint8Array>();
-  private readonly mixedParts = new Map<number, { indices: number[]; data: Uint8Array }>();
-  // Set of already-received `indices` keys (joined by `,`) — Rust uses
-  // `BTreeSet<Vec<usize>>` so two parts producing the same index set are
-  // deduped even when they have different sequence numbers. Mirrors
-  // `ur-0.4.1/src/fountain.rs::Decoder.received`.
-  private readonly receivedIndexSets = new Set<string>();
+  #seqLen: number | undefined;
+  #messageLen: number | undefined;
+  #checksum: number | undefined;
+  #fragmentLen: number | undefined;
+  readonly #pure = new Map<number, Uint8Array>();
+  readonly #mixed = new Map<number, MixedPart>();
+  readonly #seen = new Set<string>();
 
   /**
-   * Receives a fountain part and attempts to decode.
-   *
-   * @param part - The fountain part to receive
-   * @returns `true` if this part contributed new information,
-   *          `false` if it was an exact duplicate of a part already seen
-   *          (or if the decoder was already complete).
-   *
-   * @throws if the part is empty or inconsistent with previously received
-   *   parts. Mirrors Rust `Error::EmptyPart` and `Error::InconsistentPart`.
+   * Feed a part. Returns whether it added information (false once done or
+   * for a repeated index set).
+   * @throws {URError} `Decoder` for an empty part or one inconsistent with the first.
    */
-  receive(part: FountainPart): boolean {
-    // Mirrors Rust `Decoder::receive`:
-    //   if self.complete() { return Ok(false); }
-    if (this.isComplete()) {
-      return false;
-    }
-
-    // Mirrors Rust's eager EmptyPart check.
+  add(part: FountainPart): boolean {
+    if (this.done) return false;
     if (part.seqLen === 0 || part.data.length === 0 || part.messageLen === 0) {
-      throw new Error("expected non-empty part");
+      throw URError.decoder("expected non-empty part");
     }
-
-    // Initialize on first part
-    if (this.seqLen === null) {
-      this.seqLen = part.seqLen;
-      this.messageLen = part.messageLen;
-      this.checksum = part.checksum;
-      this.fragmentLen = part.data.length;
+    if (this.#seqLen === undefined) {
+      this.#seqLen = part.seqLen;
+      this.#messageLen = part.messageLen;
+      this.#checksum = part.checksum;
+      this.#fragmentLen = part.data.length;
     } else if (
-      // Mirrors Rust `Decoder::validate` exactly: every metadata field
-      // (sequence_count, message_length, checksum, fragment_length) must
-      // match across all received parts.
-      part.seqLen !== this.seqLen ||
-      part.messageLen !== this.messageLen ||
-      part.checksum !== this.checksum ||
-      part.data.length !== this.fragmentLen
+      part.seqLen !== this.#seqLen ||
+      part.messageLen !== this.#messageLen ||
+      part.checksum !== this.#checksum ||
+      part.data.length !== this.#fragmentLen
     ) {
-      throw new Error("part is inconsistent with previous ones");
+      throw URError.decoder("part is inconsistent with previous ones");
     }
-
-    // Determine which fragments this part contains.
-    const indices = chooseFragments(part.seqNum, this.seqLen, this.checksum ?? 0);
-    // Rust sorts the indices implicitly via `BTreeSet` membership; we
-    // explicitly sort the key so that two parts whose `chooseFragments`
-    // output is the same multiset (regardless of order) collapse to the
-    // same dedup key. In practice `chooseFragments` already produces a
-    // deterministic shuffle, so this is just defensive.
-    const indexSetKey = [...indices].sort((a, b) => a - b).join(",");
-    if (this.receivedIndexSets.has(indexSetKey)) {
-      return false;
-    }
-    this.receivedIndexSets.add(indexSetKey);
-
+    const indices = chooseFragments(part.seqNum, this.#seqLen, this.#checksum ?? 0);
+    const key = [...indices].sort((a, b) => a - b).join(",");
+    if (this.#seen.has(key)) return false;
+    this.#seen.add(key);
     if (indices.length === 1) {
-      // Pure fragment (or degree-1 mixed that acts like pure).
       const index = indices[0];
-      if (!this.pureFragments.has(index)) {
-        this.pureFragments.set(index, part.data);
-      }
+      if (!this.#pure.has(index)) this.#pure.set(index, part.data);
     } else {
-      // Mixed fragment - store for later reduction.
-      this.mixedParts.set(part.seqNum, { indices, data: part.data });
+      this.#mixed.set(part.seqNum, { indices, data: part.data });
     }
-
-    // Try to reduce mixed parts.
-    this.reduceMixedParts();
-
+    this.#reduce();
     return true;
   }
 
-  /**
-   * Attempts to extract pure fragments from mixed parts.
-   */
-  private reduceMixedParts(): void {
+  // Peel: any mixed part with all but one index known yields that fragment;
+  // repeat until nothing changes.
+  #reduce(): void {
     let progress = true;
-
     while (progress) {
       progress = false;
-
-      for (const [seqNum, mixed] of this.mixedParts) {
-        // Find which indices we're missing
+      for (const [seqNum, mixed] of this.#mixed) {
+        const reduced = new Uint8Array(mixed.data);
         const missing: number[] = [];
-        let reduced = mixed.data;
-
         for (const index of mixed.indices) {
-          const pure = this.pureFragments.get(index);
-          if (pure !== undefined) {
-            // XOR out the known fragment
-            reduced = xorBytes(reduced, pure);
-          } else {
-            missing.push(index);
-          }
+          const pure = this.#pure.get(index);
+          if (pure === undefined) missing.push(index);
+          else xorInto(reduced, pure);
         }
-
         if (missing.length === 0) {
-          // All fragments known, remove this mixed part
-          this.mixedParts.delete(seqNum);
+          this.#mixed.delete(seqNum);
           progress = true;
         } else if (missing.length === 1) {
-          // Can extract the missing fragment
-          const missingIndex = missing[0];
-          this.pureFragments.set(missingIndex, reduced);
-          this.mixedParts.delete(seqNum);
+          this.#pure.set(missing[0], reduced);
+          this.#mixed.delete(seqNum);
           progress = true;
         }
       }
     }
   }
 
-  /**
-   * Returns whether all fragments have been received.
-   */
-  isComplete(): boolean {
-    if (this.seqLen === null) {
-      return false;
-    }
+  get done(): boolean {
+    return this.#seqLen !== undefined && this.#pure.size === this.#seqLen;
+  }
 
-    return this.pureFragments.size === this.seqLen;
+  /** Fraction of fragments recovered. */
+  get progress(): number {
+    return this.#seqLen === undefined ? 0 : this.#pure.size / this.#seqLen;
   }
 
   /**
-   * Reconstructs the original message.
-   *
-   * @returns The original message, or null if not yet complete
+   * The message once `done`, else `undefined`.
+   * @throws {URError} `Decoder` when the reassembled bytes fail the checksum.
    */
-  message(): Uint8Array | null {
-    if (!this.isComplete() || this.seqLen === null || this.messageLen === null) {
-      return null;
-    }
-
-    // Calculate fragment size from first fragment
-    const firstFragment = this.pureFragments.get(0);
-    if (firstFragment === undefined) {
-      return null;
-    }
-
-    const fragmentLen = firstFragment.length;
-    const result = new Uint8Array(this.messageLen);
-
-    // Assemble fragments
-    for (let i = 0; i < this.seqLen; i++) {
-      const fragment = this.pureFragments.get(i);
-      if (fragment === undefined) {
-        return null;
-      }
-
+  get result(): Uint8Array<ArrayBuffer> | undefined {
+    if (!this.done || this.#seqLen === undefined || this.#messageLen === undefined)
+      return undefined;
+    const fragmentLen = this.#fragmentLen ?? 0;
+    const out = new Uint8Array(this.#messageLen);
+    for (let i = 0; i < this.#seqLen; i++) {
+      const fragment = this.#pure.get(i);
+      if (fragment === undefined) return undefined;
       const start = i * fragmentLen;
-      const end = Math.min(start + fragmentLen, this.messageLen);
-      const len = end - start;
-
-      result.set(fragment.slice(0, len), start);
+      out.set(fragment.subarray(0, Math.min(fragmentLen, this.#messageLen - start)), start);
     }
-
-    // Verify checksum
-    const actualChecksum = crc32(result);
-    if (actualChecksum !== this.checksum) {
-      throw new Error(`Checksum mismatch: expected ${this.checksum}, got ${actualChecksum}`);
+    const actual = crc32(out);
+    if (actual !== this.#checksum) {
+      throw URError.decoder(`Checksum mismatch: expected ${this.#checksum}, got ${actual}`);
     }
-
-    return result;
+    return out;
   }
 
-  /**
-   * Returns the progress as a fraction (0 to 1).
-   */
-  progress(): number {
-    if (this.seqLen === null) {
-      return 0;
-    }
-    return this.pureFragments.size / this.seqLen;
-  }
-
-  /**
-   * Resets the decoder.
-   */
   reset(): void {
-    this.seqLen = null;
-    this.messageLen = null;
-    this.checksum = null;
-    this.fragmentLen = null;
-    this.pureFragments.clear();
-    this.mixedParts.clear();
-    this.receivedIndexSets.clear();
+    this.#seqLen = undefined;
+    this.#messageLen = undefined;
+    this.#checksum = undefined;
+    this.#fragmentLen = undefined;
+    this.#pure.clear();
+    this.#mixed.clear();
+    this.#seen.clear();
   }
 }

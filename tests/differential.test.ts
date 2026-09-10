@@ -9,7 +9,13 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as baselineMod from "./baseline/uniform-resources-baseline.mjs";
-import { materialize, baselineAdapterFor, recipeName, type Recipe } from "./vectors/recipes";
+import {
+  materialize,
+  baselineAdapterFor,
+  recipeName,
+  toBytes,
+  type Recipe,
+} from "./vectors/recipes";
 import { currentApi } from "./vectors/modules";
 import { categories } from "./corpus/corpus";
 
@@ -17,15 +23,20 @@ const here = dirname(fileURLToPath(import.meta.url));
 const BASELINE_SHA256 = "2334072acdd1d4dd6a1f124ceea1cfce20e2287a482fd272814622d7577b75ab";
 
 /**
- * Tombstones: the only allowed differences. T1: argument-domain errors
- * (`maxFragmentLength < 1`, empty message) are `RangeError` in the redesign,
- * generic `URError` / bare `Error` in the baseline.
+ * Tombstones: the only allowed differences. T1 (landed): argument-domain
+ * errors are `RangeError` in the redesign where the baseline threw a
+ * generic `URError`/bare `Error` (mapped to `Decoder`): `maxFragmentLength
+ * < 1`, and a short identifier that is not 4 bytes.
  */
 const TOMBSTONES: { id: string; landed: boolean; matches: (r: Recipe) => boolean }[] = [
   {
     id: "T1",
-    landed: false,
-    matches: (r) => r.k === "mpEncode" && (r.maxLen < 1 || r.cbor === undefined),
+    landed: true,
+    matches: (r) =>
+      (r.k === "mpEncode" && r.maxLen < 1) ||
+      (r.k === "bwPlain" &&
+        (r.fn === "identifier" || r.fn === "bytemojiIdentifier") &&
+        toBytes(r.data).length !== 4),
   },
 ];
 

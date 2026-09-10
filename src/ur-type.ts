@@ -1,113 +1,48 @@
 /**
- * Copyright © 2023-2026 Blockchain Commons, LLC
- * Copyright © 2025-2026 Parity Technologies
+ * UR type identifiers.
  *
+ * @module ur-type
  */
+import { URError, type URResult } from "./error.js";
 
-import { InvalidTypeError } from "./error";
-import { isValidURType } from "./utils";
+const VALID = /^[a-z0-9-]*$/;
 
-/**
- * Represents a UR (Uniform Resource) type identifier.
- *
- * Valid UR types contain only lowercase letters, digits, and hyphens.
- *
- * @example
- * ```typescript
- * const urType = new URType('test');
- * console.log(urType.string()); // "test"
- * ```
- */
+/** A UR type: lowercase letters, digits and hyphens. The empty string is accepted here and rejected at parse time. */
 export class URType {
-  private readonly _type: string;
+  readonly #name: string;
 
-  /**
-   * Creates a new URType from the provided type string.
-   *
-   * @param urType - The UR type as a string
-   * @throws {InvalidTypeError} If the type contains invalid characters
-   *
-   * @example
-   * ```typescript
-   * const urType = new URType('test');
-   * ```
-   */
-  constructor(urType: string) {
-    if (!isValidURType(urType)) {
-      throw new InvalidTypeError();
-    }
-    this._type = urType;
+  /** @throws {URError} `InvalidType` */
+  constructor(name: string) {
+    if (!URType.isValid(name)) throw URError.invalidType();
+    this.#name = name;
   }
 
-  /**
-   * Returns the string representation of the URType.
-   *
-   * @example
-   * ```typescript
-   * const urType = new URType('test');
-   * console.log(urType.string()); // "test"
-   * ```
-   */
-  string(): string {
-    return this._type;
+  /** @throws {URError} `InvalidType` */
+  static from(name: string | URType): URType {
+    return typeof name === "string" ? new URType(name) : name;
   }
 
-  /**
-   * Checks equality with another URType based on the type string.
-   */
+  /** Non-throwing `from`. */
+  static tryFrom(name: string): URResult<URType> {
+    return URType.isValid(name)
+      ? { ok: true, value: new URType(name) }
+      : { ok: false, error: URError.invalidType() };
+  }
+
+  /** Whether `name` uses only `[a-z0-9-]`. */
+  static isValid(name: string): boolean {
+    return VALID.test(name);
+  }
+
+  get name(): string {
+    return this.#name;
+  }
+
   equals(other: URType): boolean {
-    return this._type === other._type;
+    return this.#name === other.#name;
   }
 
-  /**
-   * Returns the string representation.
-   */
   toString(): string {
-    return this._type;
-  }
-
-  /**
-   * Creates a URType from a string, throwing an error if invalid.
-   *
-   * @param value - The UR type string
-   * @returns A new URType instance
-   * @throws {InvalidTypeError} If the type is invalid
-   */
-  static from(value: string): URType {
-    return new URType(value);
-  }
-
-  /**
-   * Safely creates a URType, returning a typed `Result`-shaped
-   * discriminated union instead of throwing.
-   *
-   * Mirrors Rust `impl TryFrom<&str> for URType` /
-   * `impl TryFrom<String> for URType` (`bc-ur-rust/src/ur_type.rs`),
-   * which return `Result<URType, Error>`. The TS shape is the
-   * idiomatic discriminated form so callers can branch on `ok`
-   * without `instanceof`:
-   *
-   * @example
-   * ```typescript
-   * const r = URType.tryFrom("test");
-   * if (r.ok) {
-   *   console.log(r.value.string()); // "test"
-   * } else {
-   *   console.error(r.error.message);
-   * }
-   * ```
-   *
-   * @param value - The UR type string
-   * @returns A typed Result: `{ ok: true; value: URType }` on success,
-   *   `{ ok: false; error: InvalidTypeError }` on failure.
-   */
-  static tryFrom(
-    value: string,
-  ): { ok: true; value: URType } | { ok: false; error: InvalidTypeError } {
-    try {
-      return { ok: true, value: new URType(value) };
-    } catch (error) {
-      return { ok: false, error: error as InvalidTypeError };
-    }
+    return this.#name;
   }
 }

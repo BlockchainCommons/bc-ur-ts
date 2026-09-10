@@ -74,7 +74,9 @@ fn run(r: &serde_json::Value) -> String {
                     "bytemojis" => bytewords::encode_to_bytemojis(&d),
                     "minimal" => bytewords::encode_to_minimal_bytewords(&d),
                     f => {
-                        let a: [u8; 4] = d.try_into().map_err(|_| bc_ur::Error::UR("Identifier data must be exactly 4 bytes".into()))?;
+                        // `identifier(&[u8; 4])` cannot take a wrong length in Rust; that
+                        // input is JS-only and TypeScript reports RangeError (RUST_DIVERGENCES §2).
+                        let Ok(a): Result<[u8; 4], _> = d.try_into() else { return Ok("throw:RangeError".into()) };
                         if f == "identifier" { bytewords::identifier(&a) } else { bytewords::bytemoji_identifier(&a) }
                     }
                 }
@@ -142,6 +144,8 @@ fn expected_divergence(r: &serde_json::Value, got: &str, want: &str) -> Option<&
             _ => None,
         },
         "urDecode" if got == "throw:Decoder" && want == "throw:Bytewords" => Some("D2"),
+        // argument-domain errors (maxFragmentLength < 1) are RangeError in TypeScript
+        "mpEncode" if got == "throw:Decoder" && want == "throw:RangeError" => Some("D2"),
         "bwDecode" if got == "throw:Bytewords" && r["s"].as_str().unwrap().chars().any(|c| c.is_ascii_uppercase()) => Some("D3"),
         _ => None,
     }

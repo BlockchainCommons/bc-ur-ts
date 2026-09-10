@@ -4,196 +4,135 @@
 
 ```ts
 
-import { Cbor } from '@blockchaincommons/dcbor-compat';
-import { CborTaggedDecodable } from '@blockchaincommons/dcbor-compat';
-import { CborTaggedEncodable } from '@blockchaincommons/dcbor-compat';
+import { Cbor } from '@blockchaincommons/dcbor';
+import { CborCodec } from '@blockchaincommons/dcbor';
+import { CborTagged } from '@blockchaincommons/dcbor';
+import { ToCbor } from '@blockchaincommons/dcbor';
 
 // @public
-export const BYTEMOJIS: string[];
-
-// @public
-export const BYTEWORDS: string[];
-
-// @public (undocumented)
-export namespace bytewords {
-    export { BYTEMOJIS, BYTEWORDS, BytewordsStyle as Style, encodeBytemojisIdentifier as bytemojiIdentifier, canonicalizeByteword, decodeBytewords as decode, encodeBytewords as encode, encodeToBytemojis, encodeToMinimalBytewords, encodeToWords, encodeBytewordsIdentifier as identifier, isValidBytemoji };
-}
-
-// @public
-export class BytewordsError extends URError {
-    constructor(message: string);
-}
-
-// @public
-export enum BytewordsStyle {
-    Minimal = "minimal",
-    Standard = "standard",
-    Uri = "uri"
-}
-
-// @public
-export function canonicalizeByteword(token: string): string | undefined;
-
-// @public
-export class CBORError extends URError {
-    constructor(message: string);
-}
-
-// @public
-export function decodableFromUR<T>(decodable: CborTaggedDecodable<T>, ur: UR): T;
-
-// @public
-export function decodableFromURString<T>(decodable: CborTaggedDecodable<T>, urString: string): T;
-
-// @public
-export function decodeBytewords(encoded: string, style?: BytewordsStyle): Uint8Array;
-
-// @public
-export function encodeBytemojisIdentifier(data: Uint8Array): string;
-
-// @public
-export function encodeBytewords(data: Uint8Array, style?: BytewordsStyle): string;
-
-// @public
-export function encodeBytewordsIdentifier(data: Uint8Array): string;
-
-// @public
-export function encodeToBytemojis(data: Uint8Array): string;
-
-// @public
-export function encodeToMinimalBytewords(data: Uint8Array): string;
-
-// @public
-export function encodeToWords(data: Uint8Array): string;
-
-// @public
-export class InvalidSchemeError extends URError {
-    constructor();
-}
-
-// @public
-export class InvalidTypeError extends URError {
-    constructor();
-}
-
-// @public
-export function isError(result: unknown): result is Error;
-
-// @public
-export function isURCodable(obj: unknown): obj is URCodable;
-
-// @public
-export function isURDecodable(obj: unknown): obj is URDecodable;
-
-// @public
-export function isUREncodable(obj: unknown): obj is UREncodable;
-
-// @public
-export function isURTypeChar(char: string): boolean;
-
-// @public
-export function isValidBytemoji(emoji: string): boolean;
-
-// @public
-export function isValidURType(urType: string): boolean;
+export function decodeURWith<T>(ur: UR, codec: CborCodec<T>): T;
 
 // @public
 export class MultipartDecoder {
-    isComplete(): boolean;
-    message(): UR | null;
-    receive(part: string): void;
+    add(part: string): boolean;
+    // (undocumented)
+    get done(): boolean;
+    get progress(): number;
+    // (undocumented)
+    reset(): void;
+    get result(): UR | undefined;
 }
 
 // @public
-export class MultipartEncoder {
-    constructor(ur: UR, maxFragmentLen: number);
-    currentIndex(): number;
+export class MultipartEncoder implements Iterable<string> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<string>;
+    constructor(ur: UR, maxFragmentLength: number);
+    get index(): number;
+    // (undocumented)
     nextPart(): string;
-    partsCount(): number;
+    get partCount(): number;
 }
 
 // @public
-export class NotSinglePartError extends URError {
-    constructor();
-}
-
-// @public (undocumented)
-export type Result<T> = T | Error;
-
-// @public
-export class TypeUnspecifiedError extends URError {
-    constructor();
+export interface ToUR {
+    // (undocumented)
+    toUR(): UR;
 }
 
 // @public
-export class UnexpectedTypeError extends URError {
-    constructor(expected: string, found: string);
+export interface UnexpectedTypeDetails {
+    // (undocumented)
+    readonly expected: string;
+    // (undocumented)
+    readonly found: string;
 }
 
 // @public
 export class UR {
-    cbor(): Cbor;
-    checkType(expectedType: string | URType): void;
+    constructor(type: URType, cbor: Cbor);
+    // (undocumented)
+    get cbor(): Cbor;
+    static decodeBytes(urString: string): {
+        type: URType;
+        bytes: Uint8Array<ArrayBuffer>;
+    };
+    static encodeBytes(type: string | URType, cborBytes: Uint8Array): string;
     equals(other: UR): boolean;
-    static fromURString(urString: string): UR;
-    static new(urType: string | URType, cbor: Cbor): UR;
-    qrData(): Uint8Array;
-    qrString(): string;
-    string(): string;
+    // (undocumented)
+    expectType(type: string | URType): void;
+    // (undocumented)
+    static from(type: string | URType, cbor: Cbor): UR;
+    // (undocumented)
+    isType(type: string | URType): boolean;
+    static parse(urString: string): UR;
+    toQRBytes(): Uint8Array<ArrayBuffer>;
+    toQRString(): string;
     toString(): string;
-    urType(): URType;
-    urTypeStr(): string;
-}
-
-// @public
-export interface URCodable extends UREncodable, URDecodable {}
-
-// @public
-export interface URDecodable {
-    fromUR(ur: UR): unknown;
-    fromURString?(urString: string): unknown;
-}
-
-// @public
-export class URDecodeError extends URError {
-    constructor(message: string);
-}
-
-// @public
-export interface UREncodable {
-    ur(): UR;
-    urString(): string;
+    // (undocumented)
+    get type(): URType;
 }
 
 // @public
 export class URError extends Error {
-    constructor(message: string);
+    constructor(code: URErrorCode, message: string, details?: unknown, cause?: unknown);
+    // (undocumented)
+    static bytewords(message: string, cause?: unknown): URErrorTyped<"Bytewords">;
+    // (undocumented)
+    static cbor(message: string, cause?: unknown): URErrorTyped<"Cbor">;
+    // (undocumented)
+    readonly code: URErrorCode;
+    static decoder(message: string, cause?: unknown): URErrorTyped<"Decoder">;
+    // (undocumented)
+    readonly details: unknown;
+    // (undocumented)
+    static invalidScheme(): URErrorTyped<"InvalidScheme">;
+    // (undocumented)
+    static invalidType(): URErrorTyped<"InvalidType">;
+    static isURError(value: unknown): value is URErrorTyped;
+    // (undocumented)
+    static notSinglePart(): URErrorTyped<"NotSinglePart">;
+    // (undocumented)
+    static typeUnspecified(): URErrorTyped<"TypeUnspecified">;
+    // (undocumented)
+    static unexpectedType(expected: string, found: string): URErrorTyped<"UnexpectedType">;
 }
 
 // @public
-export function urFromEncodable(encodable: CborTaggedEncodable): UR;
+export type URErrorCode = "InvalidScheme" | "TypeUnspecified" | "InvalidType" | "NotSinglePart" | "UnexpectedType" | "Bytewords" | "Cbor" | "Decoder";
 
 // @public
-export function urStringFromEncodable(encodable: CborTaggedEncodable): string;
+export type URErrorTyped<C extends URErrorCode = URErrorCode> = C extends URErrorCode ? URError & {
+    readonly code: C;
+    readonly details: C extends "UnexpectedType" ? UnexpectedTypeDetails : undefined;
+} : never;
+
+// @public
+export function urFor(value: ToCbor & CborTagged): UR;
+
+// @public
+export type URResult<T> = {
+    readonly ok: true;
+    readonly value: T;
+} | {
+    readonly ok: false;
+    readonly error: URError;
+};
 
 // @public
 export class URType {
-    constructor(urType: string);
+    constructor(name: string);
+    // (undocumented)
     equals(other: URType): boolean;
-    static from(value: string): URType;
-    string(): string;
+    // (undocumented)
+    static from(name: string | URType): URType;
+    static isValid(name: string): boolean;
+    // (undocumented)
+    get name(): string;
+    // (undocumented)
     toString(): string;
-    static tryFrom(value: string): {
-        ok: true;
-        value: URType;
-    } | {
-        ok: false;
-        error: InvalidTypeError;
-    };
+    static tryFrom(name: string): URResult<URType>;
 }
-
-// @public
-export function validateURType(urType: string): string;
 
 // (No @packageDocumentation comment for this package)
 

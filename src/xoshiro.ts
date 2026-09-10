@@ -1,292 +1,165 @@
 /**
- * Copyright © 2023-2026 Blockchain Commons, LLC
- * Copyright © 2025-2026 Parity Technologies
+ * xoshiro256** on 32-bit lanes, seeded from 32 bytes (four big-endian
+ * u64s), with the double/int/shuffle/degree samplers the fountain code
+ * draws from. Internal; the same core as `@blockchaincommons/rand`.
  *
- *
- * Xoshiro256** PRNG implementation.
- *
- * This is a high-quality, fast pseudo-random number generator used
- * for deterministic fragment selection in fountain codes.
- *
- * Reference: https://prng.di.unimi.it/
- * BC-UR Reference: https://github.com/nicklockwood/fountain-codes
+ * @internal
+ * @module xoshiro
  */
-
 import { sha256 } from "@blockchaincommons/crypto";
 
-const MAX_UINT64 = BigInt("0xffffffffffffffff");
+const TWO_32 = 4294967296;
+const TWO_64 = 18446744073709551616;
 
-/**
- * Performs a left rotation on a 64-bit BigInt.
- */
-function rotl(x: bigint, k: number): bigint {
-  const kBigInt = BigInt(k);
-  return ((x << kBigInt) | (x >> (64n - kBigInt))) & MAX_UINT64;
-}
-
-/**
- * Xoshiro256** pseudo-random number generator.
- *
- * This PRNG is used for deterministic mixing in fountain codes,
- * allowing both encoder and decoder to agree on which fragments
- * are combined without transmitting that information.
- */
 export class Xoshiro256 {
-  private s: [bigint, bigint, bigint, bigint];
+  private readonly s = new Uint32Array(8); // [s0lo, s0hi, s1lo, s1hi, …]
+  private outLo = 0;
+  private outHi = 0;
 
-  /**
-   * Creates a new Xoshiro256** instance from a 32-byte seed.
-   *
-   * The seed must be exactly 32 bytes (256 bits). The bytes are interpreted
-   * using the BC-UR reference algorithm: each 8-byte chunk is read as
-   * big-endian then stored as little-endian for the state.
-   *
-   * @param seed - The seed bytes (must be exactly 32 bytes)
-   */
+  /** @throws {RangeError} unless `seed` is 32 bytes. */
   constructor(seed: Uint8Array) {
-    if (seed.length !== 32) {
-      throw new Error(`Seed must be 32 bytes, got ${seed.length}`);
-    }
-
-    // BC-UR reference implementation:
-    // For each 8-byte chunk, read as big-endian u64, then convert to little-endian bytes
-    // This effectively swaps the byte order within each 8-byte segment
-    const s: [bigint, bigint, bigint, bigint] = [0n, 0n, 0n, 0n];
+    if (seed.length !== 32) throw new RangeError(`seed must be 32 bytes, got ${seed.length}`);
+    const v = new DataView(seed.buffer, seed.byteOffset, 32);
     for (let i = 0; i < 4; i++) {
-      // Read 8 bytes as big-endian u64
-      let v = 0n;
-      for (let n = 0; n < 8; n++) {
-        v = (v << 8n) | BigInt(seed[8 * i + n] ?? 0);
-      }
-      s[i] = v;
+      this.s[i * 2 + 1] = v.getUint32(i * 8, false);
+      this.s[i * 2] = v.getUint32(i * 8 + 4, false);
     }
-
-    this.s = s;
   }
 
-  /**
-   * Creates a Xoshiro256** instance from raw state values.
-   * Useful for seeding with specific values.
-   */
-  static fromState(s0: bigint, s1: bigint, s2: bigint, s3: bigint): Xoshiro256 {
-    const instance = Object.create(Xoshiro256.prototype) as Xoshiro256;
-    instance.s = [s0, s1, s2, s3];
-    return instance;
+  private step(): void {
+    const s = this.s;
+    const s0lo = s[0],
+      s0hi = s[1],
+      s1lo = s[2],
+      s1hi = s[3],
+      s2lo = s[4],
+      s2hi = s[5],
+      s3lo = s[6],
+      s3hi = s[7];
+
+    // result = rotl(s1 * 5, 7) * 9
+    let p = s1lo * 5;
+    const mlo = p >>> 0;
+    const mhi = (Math.imul(s1hi, 5) + Math.floor(p / TWO_32)) >>> 0;
+    const rlo = ((mlo << 7) | (mhi >>> 25)) >>> 0;
+    const rhi = ((mhi << 7) | (mlo >>> 25)) >>> 0;
+    p = rlo * 9;
+    this.outLo = p >>> 0;
+    this.outHi = (Math.imul(rhi, 9) + Math.floor(p / TWO_32)) >>> 0;
+
+    const tlo = (s1lo << 17) >>> 0;
+    const thi = ((s1hi << 17) | (s1lo >>> 15)) >>> 0;
+    let n2lo = (s2lo ^ s0lo) >>> 0,
+      n2hi = (s2hi ^ s0hi) >>> 0;
+    let n3lo = (s3lo ^ s1lo) >>> 0,
+      n3hi = (s3hi ^ s1hi) >>> 0;
+    const n1lo = (s1lo ^ n2lo) >>> 0,
+      n1hi = (s1hi ^ n2hi) >>> 0;
+    const n0lo = (s0lo ^ n3lo) >>> 0,
+      n0hi = (s0hi ^ n3hi) >>> 0;
+    n2lo = (n2lo ^ tlo) >>> 0;
+    n2hi = (n2hi ^ thi) >>> 0;
+    // rotl(s3, 45) = swap halves, then rotl 13
+    const swlo = n3hi,
+      swhi = n3lo;
+    n3lo = ((swlo << 13) | (swhi >>> 19)) >>> 0;
+    n3hi = ((swhi << 13) | (swlo >>> 19)) >>> 0;
+
+    s[0] = n0lo;
+    s[1] = n0hi;
+    s[2] = n1lo;
+    s[3] = n1hi;
+    s[4] = n2lo;
+    s[5] = n2hi;
+    s[6] = n3lo;
+    s[7] = n3hi;
   }
 
-  /**
-   * Generates the next 64-bit random value.
-   */
-  next(): bigint {
-    const result = (rotl((this.s[1] * 5n) & MAX_UINT64, 7) * 9n) & MAX_UINT64;
-
-    const t = (this.s[1] << 17n) & MAX_UINT64;
-
-    this.s[2] ^= this.s[0];
-    this.s[3] ^= this.s[1];
-    this.s[1] ^= this.s[2];
-    this.s[0] ^= this.s[3];
-
-    this.s[2] ^= t;
-    this.s[3] = rotl(this.s[3], 45);
-
-    return result;
+  nextU64(): bigint {
+    this.step();
+    return (BigInt(this.outHi) << 32n) | BigInt(this.outLo);
   }
 
-  /**
-   * Generates a random double in [0, 1).
-   * Matches BC-UR reference: self.next() as f64 / (u64::MAX as f64 + 1.0)
-   */
+  /** The next output as a double in [0, 1): the 64-bit value divided by 2^64. */
   nextDouble(): number {
-    const value = this.next();
-    // u64::MAX as f64 + 1.0 = 18446744073709551616.0
-    return Number(value) / 18446744073709551616.0;
+    this.step();
+    // hi·2^32 + lo rounds once, exactly as Number(bigint) would.
+    return (this.outHi * TWO_32 + this.outLo) / TWO_64;
   }
 
-  /**
-   * Generates a random integer in [low, high] (inclusive).
-   * Matches BC-UR reference: (self.next_double() * ((high - low + 1) as f64)) as u64 + low
-   */
+  /** Uniform-ish integer in `[low, high]` from one double. */
   nextInt(low: number, high: number): number {
-    const range = high - low + 1;
-    return Math.floor(this.nextDouble() * range) + low;
+    return Math.floor(this.nextDouble() * (high - low + 1)) + low;
   }
 
-  /**
-   * Generates a random byte [0, 255].
-   *
-   * Mirrors Rust `Xoshiro256::next_byte` (`ur-0.4.1/src/xoshiro.rs:91`):
-   *   `self.next_int(0, 255) as u8`
-   * This goes through `next_double() * 256.0`, which effectively uses
-   * the top 8 bits of the f64-converted u64 — NOT the low 8 bits
-   * of the raw `next()` output. Earlier the TS port used `next() & 0xff`,
-   * which produced a completely different byte sequence than Rust for
-   * the same seeded RNG.
-   */
   nextByte(): number {
     return this.nextInt(0, 255);
   }
 
-  /**
-   * Generates an array of random bytes.
-   *
-   * Mirrors Rust `Xoshiro256::next_bytes` (`ur-0.4.1/src/xoshiro.rs:95-97`):
-   *   `(0..n).map(|_| self.next_byte()).collect()`
-   */
-  nextData(count: number): Uint8Array {
-    const result = new Uint8Array(count);
-    for (let i = 0; i < count; i++) {
-      result[i] = this.nextByte();
-    }
-    return result;
+  nextData(count: number): Uint8Array<ArrayBuffer> {
+    const out = new Uint8Array(count);
+    for (let i = 0; i < count; i++) out[i] = this.nextByte();
+    return out;
   }
 
-  /**
-   * Shuffles items by repeatedly picking random indices.
-   * Matches BC-UR reference implementation.
-   */
-  shuffled<T>(items: T[]): T[] {
+  /** Fisher–Yates by repeated removal, the order the reference uses. */
+  shuffled<T>(items: readonly T[]): T[] {
     const source = [...items];
-    const shuffled: T[] = [];
+    const out: T[] = [];
     while (source.length > 0) {
       const index = this.nextInt(0, source.length - 1);
-      const item = source.splice(index, 1)[0];
-      if (item !== undefined) {
-        shuffled.push(item);
-      }
+      out.push(source.splice(index, 1)[0]);
     }
-    return shuffled;
+    return out;
   }
 
-  /**
-   * Chooses the degree (number of fragments to mix) using a weighted sampler.
-   * Uses the robust soliton distribution with weights [1/1, 1/2, 1/3, ..., 1/n].
-   * Matches BC-UR reference implementation.
-   */
+  /** A degree in `1..=seqLen` with probability ∝ 1/degree (alias sampling). */
   chooseDegree(seqLen: number): number {
-    // Create weights: [1/1, 1/2, 1/3, ..., 1/seqLen]
-    const weights: number[] = [];
-    for (let i = 1; i <= seqLen; i++) {
-      weights.push(1.0 / i);
-    }
-
-    // Use Vose's alias method for weighted sampling
-    const sampler = new WeightedSampler(weights);
-    return sampler.next(this) + 1; // 1-indexed degree
+    const weights = Array.from({ length: seqLen }, (_, i) => 1 / (i + 1));
+    return new AliasSampler(weights).next(this) + 1;
   }
 }
 
-/**
- * Weighted sampler using Vose's alias method.
- * Allows O(1) sampling from a discrete probability distribution.
- */
-class WeightedSampler {
+/** Walker alias method over non-negative weights; the construction order is wire. */
+class AliasSampler {
   private readonly aliases: number[];
   private readonly probs: number[];
 
-  constructor(weights: number[]) {
+  constructor(weights: readonly number[]) {
     const n = weights.length;
-
-    // Mirrors Rust `Weighted::new` (`ur-0.4.1/src/sampler.rs:13-19`):
-    //   assert!(!weights.iter().any(|&p| p < 0.0), "negative probability encountered");
-    //   let summed = weights.iter().sum::<f64>();
-    //   assert!(summed > 0.0, "probabilities don't sum to a positive value");
-    if (weights.some((w) => w < 0.0)) {
-      throw new Error("negative probability encountered");
-    }
     const sum = weights.reduce((a, b) => a + b, 0);
-    if (!(sum > 0.0)) {
-      throw new Error("probabilities don't sum to a positive value");
-    }
-
     const normalized = weights.map((w) => (w * n) / sum);
-
-    // Initialize alias table
-    this.aliases = Array.from<number>({ length: n }).fill(0);
-    this.probs = Array.from<number>({ length: n }).fill(0);
-
-    // Partition into small and large
+    this.aliases = new Array<number>(n).fill(0);
+    this.probs = new Array<number>(n).fill(0);
     const small: number[] = [];
     const large: number[] = [];
-
-    for (let i = n - 1; i >= 0; i--) {
-      if (normalized[i] < 1.0) {
-        small.push(i);
-      } else {
-        large.push(i);
-      }
-    }
-
-    // Build the alias table
+    for (let i = n - 1; i >= 0; i--) (normalized[i] < 1 ? small : large).push(i);
     while (small.length > 0 && large.length > 0) {
       const a = small.pop();
       const g = large.pop();
       if (a === undefined || g === undefined) break;
-      this.probs[a] = normalized[a] ?? 0;
+      this.probs[a] = normalized[a];
       this.aliases[a] = g;
-      const normalizedG = normalized[g] ?? 0;
-      const normalizedA = normalized[a] ?? 0;
-      normalized[g] = normalizedG + normalizedA - 1.0;
-      if (normalized[g] !== undefined && normalized[g] < 1.0) {
-        small.push(g);
-      } else {
-        large.push(g);
-      }
+      normalized[g] = normalized[g] + normalized[a] - 1;
+      (normalized[g] < 1 ? small : large).push(g);
     }
-
-    while (large.length > 0) {
-      const g = large.pop();
-      if (g === undefined) break;
-      this.probs[g] = 1.0;
-    }
-
-    while (small.length > 0) {
-      const a = small.pop();
-      if (a === undefined) break;
-      this.probs[a] = 1.0;
-    }
+    for (const g of large) this.probs[g] = 1;
+    for (const a of small) this.probs[a] = 1;
   }
 
-  /**
-   * Sample from the distribution.
-   */
   next(rng: Xoshiro256): number {
     const r1 = rng.nextDouble();
     const r2 = rng.nextDouble();
-    const n = this.probs.length;
-    const i = Math.floor(n * r1);
-    if (r2 < this.probs[i]) {
-      return i;
-    } else {
-      return this.aliases[i];
-    }
+    const i = Math.floor(this.probs.length * r1);
+    return r2 < this.probs[i] ? i : this.aliases[i];
   }
 }
 
-/**
- * Creates a Xoshiro256 PRNG instance from message checksum and sequence number.
- *
- * This creates an 8-byte seed by concatenating seqNum and checksum (both in
- * big-endian), then hashes it with SHA-256 to get the 32-byte seed for Xoshiro.
- *
- * This matches the BC-UR reference implementation.
- */
-export function createSeed(checksum: number, seqNum: number): Uint8Array {
-  // Create 8-byte seed: seqNum (big-endian) || checksum (big-endian)
-  const seed8 = new Uint8Array(8);
-
-  // seqNum in big-endian (bytes 0-3)
-  seed8[0] = (seqNum >>> 24) & 0xff;
-  seed8[1] = (seqNum >>> 16) & 0xff;
-  seed8[2] = (seqNum >>> 8) & 0xff;
-  seed8[3] = seqNum & 0xff;
-
-  // checksum in big-endian (bytes 4-7)
-  seed8[4] = (checksum >>> 24) & 0xff;
-  seed8[5] = (checksum >>> 16) & 0xff;
-  seed8[6] = (checksum >>> 8) & 0xff;
-  seed8[7] = checksum & 0xff;
-
-  // Hash with SHA-256 to get 32 bytes
-  return sha256(seed8);
+/** The fountain seed for a part: `sha256(seqNum ‖ checksum)`, both big-endian u32. */
+export function seedFor(checksum: number, seqNum: number): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(8);
+  const v = new DataView(bytes.buffer);
+  v.setUint32(0, seqNum, false);
+  v.setUint32(4, checksum, false);
+  return sha256(bytes);
 }

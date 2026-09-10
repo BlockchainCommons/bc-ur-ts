@@ -1,141 +1,93 @@
-import { describe, it, expect } from "vitest";
+/**
+ * The checksum-free identifier encoders and byteword canonicalisation.
+ */
 import {
   BYTEWORDS,
   BYTEMOJIS,
-  encodeBytewordsIdentifier,
-  encodeBytemojisIdentifier,
-  encodeToWords,
-  encodeToBytemojis,
-  encodeToMinimalBytewords,
+  identifier,
+  shortIdentifier,
   isValidBytemoji,
   canonicalizeByteword,
-} from "../src";
+} from "../src/bytewords";
 
-const bytes = (...xs: number[]) => Uint8Array.from(xs);
+const bytes = (...b: number[]): Uint8Array => Uint8Array.from(b);
 
-describe("encodeToWords", () => {
-  it("matches encodeBytewordsIdentifier for the 4-byte case", () => {
-    const data = bytes(0, 1, 2, 3);
-    expect(encodeToWords(data)).toBe(encodeBytewordsIdentifier(data));
+describe("identifier", () => {
+  it("standard: space-separated words, matching shortIdentifier for 4 bytes", () => {
+    expect(identifier(bytes(0, 1, 2, 3))).toBe("able acid also apex");
+    expect(identifier(bytes(0, 1, 2, 3))).toBe(shortIdentifier(bytes(0, 1, 2, 3)));
+    expect(identifier(bytes(255))).toBe("zoom");
+    expect(identifier(bytes())).toBe("");
   });
-
-  it("encodes various lengths", () => {
-    expect(encodeToWords(bytes(0))).toBe("able");
-    expect(encodeToWords(bytes(0, 255))).toBe("able zoom");
-    expect(encodeToWords(bytes(0, 1, 2, 3))).toBe("able acid also apex");
-
-    const eight = encodeToWords(bytes(0, 1, 2, 3, 4, 5, 6, 7));
-    expect(eight.split(" ")).toHaveLength(8);
-  });
-
-  it("returns empty string for empty input", () => {
-    expect(encodeToWords(new Uint8Array())).toBe("");
-  });
-
   it("maps all 256 bytes to distinct words", () => {
-    const all = new Uint8Array(256);
-    for (let i = 0; i < 256; i++) all[i] = i;
-    const encoded = encodeToWords(all);
-    const words = encoded.split(" ");
-    expect(words).toHaveLength(256);
+    const words = identifier(Uint8Array.from({ length: 256 }, (_, i) => i)).split(" ");
     expect(new Set(words).size).toBe(256);
+    expect(words).toEqual([...BYTEWORDS]);
   });
-});
-
-describe("encodeToBytemojis", () => {
-  it("matches encodeBytemojisIdentifier for the 4-byte case", () => {
-    const data = bytes(0, 1, 2, 3);
-    expect(encodeToBytemojis(data)).toBe(encodeBytemojisIdentifier(data));
+  it("bytemoji: space-separated bytemojis", () => {
+    expect(identifier(bytes(0, 1, 2, 3), { style: "bytemoji" })).toBe("😀 😂 😆 😉");
+    expect(identifier(bytes(0, 1, 2, 3), { style: "bytemoji" })).toBe(
+      shortIdentifier(bytes(0, 1, 2, 3), { style: "bytemoji" }),
+    );
+    expect(identifier(bytes(), { style: "bytemoji" })).toBe("");
+    expect(new Set(BYTEMOJIS).size).toBe(256);
   });
-
-  it("encodes various lengths", () => {
-    expect(encodeToBytemojis(bytes(0))).toBe(BYTEMOJIS[0]);
-    const eight = encodeToBytemojis(bytes(0, 1, 2, 3, 4, 5, 6, 7));
-    expect(eight.split(" ")).toHaveLength(8);
-  });
-
-  it("returns empty string for empty input", () => {
-    expect(encodeToBytemojis(new Uint8Array())).toBe("");
-  });
-});
-
-describe("encodeToMinimalBytewords", () => {
-  it("encodes using first+last letter of each byteword with no separator", () => {
-    // "able" → "ae", "acid" → "ad", "also" → "ao", "apex" → "ax"
-    expect(encodeToMinimalBytewords(bytes(0, 1, 2, 3))).toBe("aeadaoax");
-    expect(encodeToMinimalBytewords(bytes(0))).toBe("ae");
-    expect(encodeToMinimalBytewords(new Uint8Array())).toBe("");
-  });
-
-  it("matches first+last letter of encodeToWords for every single byte", () => {
+  it("minimal: first+last letter of each word, no separator", () => {
+    expect(identifier(bytes(0, 1, 2, 3), { style: "minimal" })).toBe("aeadaoax");
     for (let b = 0; b < 256; b++) {
-      const word = BYTEWORDS[b];
-      const minimal = encodeToMinimalBytewords(bytes(b));
-      expect(minimal).toBe(word[0] + word[word.length - 1]);
+      const w = BYTEWORDS[b]!;
+      expect(identifier(bytes(b), { style: "minimal" })).toBe(w[0]! + w[3]!);
     }
+  });
+});
+
+describe("shortIdentifier", () => {
+  it("requires exactly 4 bytes", () => {
+    expect(() => shortIdentifier(bytes(1, 2, 3))).toThrow(RangeError);
+    expect(() => shortIdentifier(bytes(1, 2, 3, 4, 5), { style: "bytemoji" })).toThrow(RangeError);
   });
 });
 
 describe("isValidBytemoji", () => {
-  it("returns true for every entry in BYTEMOJIS", () => {
-    for (const e of BYTEMOJIS) {
-      expect(isValidBytemoji(e)).toBe(true);
-    }
-  });
-
-  it("returns false for unknown emojis and plain text", () => {
-    expect(isValidBytemoji("")).toBe(false);
+  it("accepts every table entry and nothing else", () => {
+    for (const e of BYTEMOJIS) expect(isValidBytemoji(e)).toBe(true);
+    expect(isValidBytemoji("😀😀")).toBe(false);
     expect(isValidBytemoji("able")).toBe(false);
-    expect(isValidBytemoji("🫶🫶")).toBe(false); // two emojis
-    expect(isValidBytemoji("🪫")).toBe(false); // not in table
+    expect(isValidBytemoji("")).toBe(false);
   });
 });
 
 describe("canonicalizeByteword", () => {
-  it("returns the exact lowercase form for full 4-letter words", () => {
+  it("full words, any case", () => {
     expect(canonicalizeByteword("able")).toBe("able");
     expect(canonicalizeByteword("ABLE")).toBe("able");
     expect(canonicalizeByteword("Zoom")).toBe("zoom");
+    expect(canonicalizeByteword("abcd")).toBeUndefined();
   });
-
-  it("returns undefined for 4-letter tokens that are not bytewords", () => {
-    expect(canonicalizeByteword("zzzz")).toBeUndefined();
-    expect(canonicalizeByteword("hell")).toBeUndefined();
-  });
-
-  it("canonicalises 2-letter (first+last) short forms", () => {
-    // "able" → "ae", "zoom" → "zm"
+  it("first+last short forms", () => {
     expect(canonicalizeByteword("ae")).toBe("able");
-    expect(canonicalizeByteword("AE")).toBe("able");
-    expect(canonicalizeByteword("zm")).toBe("zoom");
-  });
-
-  it("returns undefined for unknown 2-letter short forms", () => {
+    expect(canonicalizeByteword("ZM")).toBe("zoom");
     expect(canonicalizeByteword("zz")).toBeUndefined();
   });
-
-  it("canonicalises 3-letter (first 3 or last 3) short forms", () => {
-    // "able" → first3 "abl", last3 "ble"
+  it("first-three and last-three short forms", () => {
     expect(canonicalizeByteword("abl")).toBe("able");
     expect(canonicalizeByteword("ble")).toBe("able");
-    expect(canonicalizeByteword("ABL")).toBe("able");
-    expect(canonicalizeByteword("BLE")).toBe("able");
+    expect(canonicalizeByteword("oom")).toBe("zoom");
+    expect(canonicalizeByteword("xyz")).toBeUndefined();
   });
-
-  it("returns undefined for unknown 3-letter tokens", () => {
-    expect(canonicalizeByteword("zzz")).toBeUndefined();
-  });
-
-  it("returns undefined for empty or out-of-range lengths", () => {
+  it("other lengths", () => {
     expect(canonicalizeByteword("")).toBeUndefined();
     expect(canonicalizeByteword("a")).toBeUndefined();
-    expect(canonicalizeByteword("abcde")).toBeUndefined();
+    expect(canonicalizeByteword("aeaea")).toBeUndefined();
   });
-
-  it("round-trips every full byteword through itself", () => {
-    for (const word of BYTEWORDS) {
-      expect(canonicalizeByteword(word)).toBe(word);
-      expect(canonicalizeByteword(word.toUpperCase())).toBe(word);
+  it("round-trips every word through its full, first+last and first-three forms", () => {
+    // Last-three forms can collide with another word's first three ("qua":
+    // aqua vs quad); first-three wins, as it always has.
+    for (const w of BYTEWORDS) {
+      expect(canonicalizeByteword(w)).toBe(w);
+      expect(canonicalizeByteword(w[0]! + w[3]!)).toBe(w);
+      expect(canonicalizeByteword(w.slice(0, 3))).toBe(w);
     }
+    expect(canonicalizeByteword("qua")).toBe("quad");
   });
 });

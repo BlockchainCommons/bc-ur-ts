@@ -1,7 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
-    "src/index.ts"
+    "src/index.ts",
+    "src/bytewords.ts",
+    "src/fountain.ts"
   ],
   "out": "docs",
   "name": "@blockchaincommons/uniform-resources",

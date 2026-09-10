@@ -2,7 +2,29 @@
 
 ## 1.0.0-beta.1
 
-Extracted from the [`paritytech/bcts`](https://github.com/paritytech/bcts) monorepo, where this library was published as `@bcts/uniform-resources`. The public API is unchanged; see [MIGRATION.md](./MIGRATION.md).
+Extracted from the [`paritytech/bcts`](https://github.com/paritytech/bcts)
+monorepo (`@bcts/uniform-resources`) and redesigned as an idiomatic
+TypeScript library; see [MIGRATION.md](./MIGRATION.md). Every string this
+package produces is unchanged.
+
+- Built on canonical `@blockchaincommons/dcbor`; `crc32` from
+  `@blockchaincommons/crypto`; xoshiro on 32-bit lanes (no BigInt).
+- `UR.from` / `UR.parse`, `type` and `cbor` getters, `toString` /
+  `toQRString` / `toQRBytes`, `expectType` / `isType`, `encodeBytes` /
+  `decodeBytes`; `URType.name`, `URType.isValid`.
+- Bytewords on the `/bytewords` subpath with string-literal styles,
+  `identifier` / `shortIdentifier`; the fountain code on `/fountain`.
+- `MultipartEncoder` is iterable (`index`, `partCount`);
+  `MultipartDecoder.add/done/result/progress/reset`.
+- One `URError` with `code`, `details`, `cause` and factories; the nine
+  error classes, `Result` and `isError` removed.
+- `ToUR`, `urFor(value)`, `decodeURWith(ur, codec)` replace the
+  encodable/decodable/codable interfaces.
+- 2–6× faster: bytewords decode via a packed two-letter lookup, UR parse
+  6×, multipart encode 2.4× and decode 1.9× (`bench/benchmark.mjs`).
+- 616 golden vectors, a differential corpus against the frozen pre-redesign
+  bundle, and a Rust cross-validation harness (`tests/rust-validation`,
+  `bc-ur 0.19.2`: 590 match, 26 documented divergences, 0 mismatch).
 
 ---
 

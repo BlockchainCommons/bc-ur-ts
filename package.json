@@ -31,6 +31,28 @@
       },
       "default": "./dist/index.mjs"
     },
+    "./bytewords": {
+      "import": {
+        "types": "./dist/bytewords.d.mts",
+        "default": "./dist/bytewords.mjs"
+      },
+      "require": {
+        "types": "./dist/bytewords.d.cts",
+        "default": "./dist/bytewords.cjs"
+      },
+      "default": "./dist/bytewords.mjs"
+    },
+    "./fountain": {
+      "import": {
+        "types": "./dist/fountain.d.mts",
+        "default": "./dist/fountain.mjs"
+      },
+      "require": {
+        "types": "./dist/fountain.d.cts",
+        "default": "./dist/fountain.cjs"
+      },
+      "default": "./dist/fountain.mjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -100,6 +122,6 @@
   },
   "dependencies": {
     "@blockchaincommons/crypto": "^1.0.0-beta.1",
-    "@blockchaincommons/dcbor-compat": "^1.0.0-beta.1"
+    "@blockchaincommons/dcbor": "^1.0.0-beta.1"
   }
 }

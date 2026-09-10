@@ -65,6 +65,11 @@ accepts lower-case only outside `UR::from_ur_string`. Allowed for
   corpus feeds only canonical dCBOR (`1.5` is `f93e00`, not the f64 form).
 - **`URType` accepts the empty string.** Both do (the failure surfaces
   later, at decode, as `TypeUnspecified`).
+- **Argument-domain errors.** `shortIdentifier` takes `&[u8; 4]` in Rust, so
+  a wrong length cannot reach it; TypeScript throws `RangeError`. The
+  harness reports that input as `RangeError` directly. `MultipartEncoder`
+  with `maxFragmentLength < 1` is `Error::UR(_)` in Rust and `RangeError`
+  here (allowed under D2).
 
 ## 3. Mapping equivalences
 

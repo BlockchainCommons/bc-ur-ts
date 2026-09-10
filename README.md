@@ -27,18 +27,33 @@ bun add @blockchaincommons/uniform-resources
 ## Usage Instructions
 
 ```typescript
-import {
-  UR,
-  URType,
-  URError,
-  URDecodeError,
-  InvalidSchemeError,
-  TypeUnspecifiedError,
-  InvalidTypeError,
-  NotSinglePartError,
-  UnexpectedTypeError,
-  BytewordsError,
-} from "@blockchaincommons/uniform-resources";
+import { UR, URError, MultipartEncoder, MultipartDecoder } from "@blockchaincommons/uniform-resources";
+import { encodeBytewords } from "@blockchaincommons/uniform-resources/bytewords";
+import { cbor } from "@blockchaincommons/dcbor";
+
+// Single-part.
+const ur = UR.from("test", cbor([1, 2, 3]));
+ur.toString(); // "ur:test/lsadaoaxjygonesw"
+ur.toQRString(); // "UR:TEST/LSADAOAXJYGONESW"
+UR.parse("ur:test/lsadaoaxjygonesw").equals(ur); // true
+
+// Multipart (animated QR): an infinite fountain of parts, decoded in any order.
+const encoder = new MultipartEncoder(ur, 10);
+const decoder = new MultipartDecoder();
+for (const part of encoder) {
+  decoder.add(part);
+  if (decoder.done) break;
+}
+decoder.result?.equals(ur); // true
+
+// Bytewords.
+encodeBytewords(new Uint8Array([1, 2, 3, 4, 5]), "standard"); // "acid also apex aqua arch fuel bald nail work"
+
+try {
+  UR.parse("ur:test/lsadaoaxjygonese");
+} catch (e) {
+  if (URError.isURError(e)) console.log(e.code); // "Bytewords"
+}
 ```
 
 Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons/bc-ur-ts/tree/master/examples) directory.
@@ -49,7 +64,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Version History
 
-- **1.0.0-beta.1 (September 9, 2026)** - Initial beta release, extracted from the [`paritytech/bcts`](https://github.com/paritytech/bcts) monorepo.
+- **1.0.0-beta.1 (September 9, 2026)** - Initial beta release, extracted from the [`paritytech/bcts`](https://github.com/paritytech/bcts) monorepo and redesigned as an idiomatic TypeScript library over canonical dcbor ([MIGRATION.md](./MIGRATION.md)). Every UR, bytewords and multipart string is unchanged and cross-validated against `bc-ur 0.19.2`.
 
 ### Roadmap
 
@@ -58,7 +73,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Dependencies
 
-`@blockchaincommons/uniform-resources` depends on `@blockchaincommons/crypto`, `@blockchaincommons/dcbor-compat` at runtime.
+`@blockchaincommons/uniform-resources` depends on `@blockchaincommons/crypto`, `@blockchaincommons/dcbor` at runtime.
 
 To build and work on this library, you'll need the following tools:
 

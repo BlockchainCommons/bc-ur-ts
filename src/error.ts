@@ -1,116 +1,106 @@
 /**
- * Copyright © 2023-2026 Blockchain Commons, LLC
- * Copyright © 2025-2026 Parity Technologies
+ * The single error type thrown by this package.
  *
- *
- * Error type for UR encoding/decoding operations.
+ * @module error
+ */
+
+/** Machine-readable discriminant for a {@link URError}. */
+export type URErrorCode =
+  | "InvalidScheme"
+  | "TypeUnspecified"
+  | "InvalidType"
+  | "NotSinglePart"
+  | "UnexpectedType"
+  | "Bytewords"
+  | "Cbor"
+  | "Decoder";
+
+/** A {@link URError} whose `details` are discriminated by its `code`. */
+export type URErrorTyped<C extends URErrorCode = URErrorCode> = C extends URErrorCode
+  ? URError & {
+      readonly code: C;
+      readonly details: C extends "UnexpectedType" ? UnexpectedTypeDetails : undefined;
+    }
+  : never;
+
+/** Details carried by an `UnexpectedType` error. */
+export interface UnexpectedTypeDetails {
+  readonly expected: string;
+  readonly found: string;
+}
+
+/** A result that either holds a value or a {@link URError}. */
+export type URResult<T> =
+  { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: URError };
+
+const captureStackTrace = (
+  Error as unknown as { captureStackTrace?: (target: object, ctor: unknown) => void }
+).captureStackTrace;
+
+/**
+ * Thrown for malformed UR strings (`InvalidScheme`, `TypeUnspecified`,
+ * `InvalidType`, `NotSinglePart`), a type other than the one expected
+ * (`UnexpectedType`), bytewords failures (`Bytewords`), CBOR failures
+ * (`Cbor`), and anything the multipart decoder rejects (`Decoder`).
+ * Messages match the Rust reference; branch on `code`.
  */
 export class URError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly code: URErrorCode;
+  readonly details: unknown;
+
+  constructor(code: URErrorCode, message: string, details: unknown = undefined, cause?: unknown) {
+    super(message, cause === undefined ? undefined : { cause });
     this.name = "URError";
+    this.code = code;
+    this.details = details;
+    Object.setPrototypeOf(this, new.target.prototype);
+    if (typeof captureStackTrace === "function") captureStackTrace(this, URError);
   }
-}
 
-/**
- * Error type for invalid UR schemes.
- *
- * Message matches Rust bc-ur-rust/src/error.rs: `invalid UR scheme`.
- */
-export class InvalidSchemeError extends URError {
-  constructor() {
-    super("invalid UR scheme");
-    this.name = "InvalidSchemeError";
+  /** Type guard narrowing to the code-discriminated union. */
+  static isURError(value: unknown): value is URErrorTyped {
+    return value instanceof URError;
   }
-}
 
-/**
- * Error type for unspecified UR types.
- *
- * Message matches Rust bc-ur-rust/src/error.rs: `no UR type specified`.
- */
-export class TypeUnspecifiedError extends URError {
-  constructor() {
-    super("no UR type specified");
-    this.name = "TypeUnspecifiedError";
+  static invalidScheme(): URErrorTyped<"InvalidScheme"> {
+    return new URError("InvalidScheme", "invalid UR scheme") as URErrorTyped<"InvalidScheme">;
   }
-}
-
-/**
- * Error type for invalid UR types.
- *
- * Message matches Rust bc-ur-rust/src/error.rs: `invalid UR type`.
- */
-export class InvalidTypeError extends URError {
-  constructor() {
-    super("invalid UR type");
-    this.name = "InvalidTypeError";
+  static typeUnspecified(): URErrorTyped<"TypeUnspecified"> {
+    return new URError(
+      "TypeUnspecified",
+      "no UR type specified",
+    ) as URErrorTyped<"TypeUnspecified">;
   }
-}
-
-/**
- * Error type for non-single-part URs.
- */
-export class NotSinglePartError extends URError {
-  constructor() {
-    super("UR is not a single-part");
-    this.name = "NotSinglePartError";
+  static invalidType(): URErrorTyped<"InvalidType"> {
+    return new URError("InvalidType", "invalid UR type") as URErrorTyped<"InvalidType">;
   }
-}
-
-/**
- * Error type for unexpected UR types.
- *
- * Message matches Rust bc-ur-rust/src/error.rs:
- * `expected UR type {expected}, but found {found}`.
- */
-export class UnexpectedTypeError extends URError {
-  constructor(expected: string, found: string) {
-    super(`expected UR type ${expected}, but found ${found}`);
-    this.name = "UnexpectedTypeError";
+  static notSinglePart(): URErrorTyped<"NotSinglePart"> {
+    return new URError("NotSinglePart", "UR is not a single-part") as URErrorTyped<"NotSinglePart">;
   }
-}
-
-/**
- * Error type for Bytewords encoding/decoding errors.
- *
- * Message matches Rust bc-ur-rust/src/error.rs: `Bytewords error ({0})`.
- */
-export class BytewordsError extends URError {
-  constructor(message: string) {
-    super(`Bytewords error (${message})`);
-    this.name = "BytewordsError";
+  static unexpectedType(expected: string, found: string): URErrorTyped<"UnexpectedType"> {
+    return new URError("UnexpectedType", `expected UR type ${expected}, but found ${found}`, {
+      expected,
+      found,
+    }) as URErrorTyped<"UnexpectedType">;
   }
-}
-
-/**
- * Error type for CBOR encoding/decoding errors.
- *
- * Message matches Rust bc-ur-rust/src/error.rs: `CBOR error ({0})`.
- */
-export class CBORError extends URError {
-  constructor(message: string) {
-    super(`CBOR error (${message})`);
-    this.name = "CBORError";
+  static bytewords(message: string, cause?: unknown): URErrorTyped<"Bytewords"> {
+    return new URError(
+      "Bytewords",
+      `Bytewords error (${message})`,
+      undefined,
+      cause,
+    ) as URErrorTyped<"Bytewords">;
   }
-}
-
-/**
- * Error type for UR decoder errors.
- * Matches Rust's Error::UR(String) variant.
- */
-export class URDecodeError extends URError {
-  constructor(message: string) {
-    super(`UR decoder error (${message})`);
-    this.name = "URDecodeError";
+  static cbor(message: string, cause?: unknown): URErrorTyped<"Cbor"> {
+    return new URError("Cbor", `CBOR error (${message})`, undefined, cause) as URErrorTyped<"Cbor">;
   }
-}
-
-export type Result<T> = T | Error;
-
-/**
- * Helper function to check if a result is an error.
- */
-export function isError(result: unknown): result is Error {
-  return result instanceof Error;
+  /** Anything the multipart or fountain decoder rejects. */
+  static decoder(message: string, cause?: unknown): URErrorTyped<"Decoder"> {
+    return new URError(
+      "Decoder",
+      `UR decoder error (${message})`,
+      undefined,
+      cause,
+    ) as URErrorTyped<"Decoder">;
+  }
 }

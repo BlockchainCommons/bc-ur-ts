@@ -17,7 +17,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { sha256 } from "@blockchaincommons/crypto";
-import { cbor } from "@blockchaincommons/dcbor-compat";
+import { encodeCbor } from "@blockchaincommons/dcbor";
 import { Xoshiro256 } from "../src/xoshiro";
 import {
   FountainEncoder,
@@ -26,7 +26,8 @@ import {
   fragmentLength,
   partition,
 } from "../src/fountain";
-import { crc32, encodeBytewords, BytewordsStyle } from "../src/utils";
+import { crc32 } from "@blockchaincommons/crypto";
+import { encodeBytewords } from "../src/bytewords";
 
 // -- helpers ---------------------------------------------------------------
 
@@ -99,7 +100,7 @@ describe("Xoshiro256 cross-platform fixture", () => {
       10, 43, 43, 52,
     ];
     for (const e of expected) {
-      expect(Number(rng.next() % 100n)).toBe(e);
+      expect(Number(rng.nextU64() % 100n)).toBe(e);
     }
   });
 
@@ -113,7 +114,7 @@ describe("Xoshiro256 cross-platform fixture", () => {
       81, 3, 1, 30,
     ];
     for (const e of expected) {
-      expect(Number(rng.next() % 100n)).toBe(e);
+      expect(Number(rng.nextU64() % 100n)).toBe(e);
     }
   });
 
@@ -334,7 +335,7 @@ describe("FountainEncoder cross-platform fixture", () => {
     ];
     // Rust: 256 / 30 + 1 = 9 (because partition rounds the
     // fragment_length down to 29).
-    expect(encoder.seqLen).toBe(9);
+    expect(encoder.partCount).toBe(9);
     for (let i = 0; i < expectedHex.length; i++) {
       const part = encoder.nextPart();
       expect(part.seqNum).toBe(i + 1);
@@ -370,16 +371,16 @@ describe("FountainEncoder cross-platform fixture", () => {
       "8513091901001a0167aa07581d3171c5dc365766eff25ae47c6f10e7de48cfb8474e050e5fe997a6dc24",
       "8514091901001a0167aa07581de055c2433562184fa71b4be94f262e200f01c6f74c284b0dc6fae6673f",
     ];
-    expect(encoder.seqLen).toBe(9);
+    expect(encoder.partCount).toBe(9);
     for (const e of expectedCbor) {
       const part = encoder.nextPart();
-      const partCbor = cbor([
+      const partCbor = encodeCbor([
         part.seqNum,
         part.seqLen,
         part.messageLen,
         part.checksum,
         part.data,
-      ]).toData();
+      ]);
       expect(bytesToHex(partCbor)).toBe(e);
     }
   });
@@ -387,11 +388,11 @@ describe("FountainEncoder cross-platform fixture", () => {
   it("FountainEncoder is_complete after seqLen parts", () => {
     const message = makeMessage("Wolf", 256);
     const encoder = new FountainEncoder(message, 30);
-    expect(encoder.isComplete()).toBe(false);
-    for (let i = 0; i < encoder.seqLen; i++) {
+    expect(encoder.done).toBe(false);
+    for (let i = 0; i < encoder.partCount; i++) {
       encoder.nextPart();
     }
-    expect(encoder.isComplete()).toBe(true);
+    expect(encoder.done).toBe(true);
   });
 });
 
@@ -404,11 +405,11 @@ describe("FountainDecoder cross-platform behaviour", () => {
     const message = makeMessage("Wolf", 32767);
     const encoder = new FountainEncoder(message, 1000);
     const decoder = new FountainDecoder();
-    while (!decoder.isComplete()) {
-      expect(decoder.message()).toBeNull();
-      decoder.receive(encoder.nextPart());
+    while (!decoder.done) {
+      expect(decoder.result).toBeUndefined();
+      decoder.add(encoder.nextPart());
     }
-    const recovered = decoder.message();
+    const recovered = decoder.result;
     expect(recovered).not.toBeNull();
     expect(bytesToHex(recovered as Uint8Array)).toBe(bytesToHex(message));
   });
@@ -418,12 +419,12 @@ describe("FountainDecoder cross-platform behaviour", () => {
     const encoder = new FountainEncoder(message, 1000);
     const decoder = new FountainDecoder();
     let skip = false;
-    while (!decoder.isComplete()) {
+    while (!decoder.done) {
       const part = encoder.nextPart();
-      if (!skip) decoder.receive(part);
+      if (!skip) decoder.add(part);
       skip = !skip;
     }
-    const recovered = decoder.message();
+    const recovered = decoder.result;
     expect(recovered).not.toBeNull();
     expect(bytesToHex(recovered as Uint8Array)).toBe(bytesToHex(message));
   });
@@ -431,7 +432,7 @@ describe("FountainDecoder cross-platform behaviour", () => {
   it("rejects empty parts (Rust EmptyPart)", () => {
     const decoder = new FountainDecoder();
     expect(() =>
-      decoder.receive({
+      decoder.add({
         seqNum: 1,
         seqLen: 0,
         messageLen: 100,
@@ -440,7 +441,7 @@ describe("FountainDecoder cross-platform behaviour", () => {
       }),
     ).toThrow(/non-empty/);
     expect(() =>
-      decoder.receive({
+      decoder.add({
         seqNum: 1,
         seqLen: 1,
         messageLen: 0,
@@ -449,7 +450,7 @@ describe("FountainDecoder cross-platform behaviour", () => {
       }),
     ).toThrow(/non-empty/);
     expect(() =>
-      decoder.receive({
+      decoder.add({
         seqNum: 1,
         seqLen: 1,
         messageLen: 100,
@@ -461,7 +462,7 @@ describe("FountainDecoder cross-platform behaviour", () => {
 
   it("rejects parts whose fragment length differs from the first received", () => {
     const decoder = new FountainDecoder();
-    decoder.receive({
+    decoder.add({
       seqNum: 1,
       seqLen: 2,
       messageLen: 4,
@@ -470,7 +471,7 @@ describe("FountainDecoder cross-platform behaviour", () => {
     });
     // Different fragment_length (3 instead of 2) — Rust validate() rejects.
     expect(() =>
-      decoder.receive({
+      decoder.add({
         seqNum: 2,
         seqLen: 2,
         messageLen: 4,
@@ -491,7 +492,7 @@ describe("UR encoder cross-platform fixture", () => {
   it("test_ur_encoder: 256-byte 'Wolf' wrapped as ur:bytes/n-9/...", () => {
     // Wrap the raw "Wolf" message as `bytes(...)` CBOR — this is what
     // Rust's `make_message_ur` produces (using minicbor::to_vec(ByteVec)).
-    const messageCbor = cbor(makeMessage("Wolf", 256)).toData();
+    const messageCbor = encodeCbor(makeMessage("Wolf", 256));
     const encoder = new FountainEncoder(messageCbor, 30);
     const expected = [
       "ur:bytes/1-9/lpadascfadaxcywenbpljkhdcahkadaemejtswhhylkepmykhhtsytsnoyoyaxaedsuttydmmhhpktpmsrjtdkgslpgh",
@@ -515,17 +516,17 @@ describe("UR encoder cross-platform fixture", () => {
       "ur:bytes/19-9/lpbwascfadaxcywenbpljkhdcadekicpaajootjzpsdrbalpeywllbdsnbinaerkurspbncxgslgftvtsrjtksplcpeo",
       "ur:bytes/20-9/lpbbascfadaxcywenbpljkhdcayapmrleeleaxpasfrtrdkncffwjyjzgyetdmlewtkpktgllepfrltataztksmhkbot",
     ];
-    expect(encoder.seqLen).toBe(9);
+    expect(encoder.partCount).toBe(9);
     for (const e of expected) {
       const part = encoder.nextPart();
-      const partCbor = cbor([
+      const partCbor = encodeCbor([
         part.seqNum,
         part.seqLen,
         part.messageLen,
         part.checksum,
         part.data,
-      ]).toData();
-      const body = encodeBytewords(partCbor, BytewordsStyle.Minimal);
+      ]);
+      const body = encodeBytewords(partCbor, "minimal");
       const uri = `ur:bytes/${part.seqNum}-${part.seqLen}/${body}`;
       expect(uri).toBe(e);
     }

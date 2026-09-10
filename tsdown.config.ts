@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/bytewords.ts", "src/fountain.ts"],
   outDir: "dist",
   format: ["cjs", "esm"],
   dts: true,
