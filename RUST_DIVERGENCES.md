@@ -19,21 +19,65 @@ differs from the Rust reference. It has three kinds of entry:
 
 ## 1. True behavioral divergences
 
-_None recorded yet for the extraction release. The port was byte-compatible with
-the Rust reference at the tracked version when it was extracted from the
-`paritytech/bcts` monorepo._
+All three were found by the Phase 1 harness (`tests/rust-validation`,
+`bc-ur = 0.19.2` over the `ur 0.4.1` crate) and are the pre-redesign
+behaviour, kept deliberately. Every part string, UR string and bytewords
+string is byte-identical; the divergences are in *decoding leniency* and
+*error taxonomy*, and TypeScript is a superset in each case.
 
-> Any divergence found after extraction must be added here in the same commit
-> that introduces or discovers it, with the input, the Rust outcome, the
-> TypeScript outcome, and the reason the difference is intentional.
+### 1.1 The fountain decoder completes earlier (D1)
+
+`FountainDecoder` keeps every mixed part and, whenever a pure fragment
+appears, re-reduces all of them until no more progress is possible. The
+`ur` crate's decoder reduces a mixed part only when it arrives and when a
+new simple part is produced from it, so it can need more parts. On
+out-of-order or lossy sequences TypeScript therefore reports completion at
+an **earlier or equal** part index, and can complete where the reference is
+still incomplete after the same parts. The reassembled message is
+identical. The harness allows a vector iff both payloads match and the
+reference index is ≥ ours (or the reference is incomplete after ≥ our
+index).
+
+### 1.2 Finer error codes inside the decoders (D2)
+
+The reference wraps everything raised by the `ur` crate as
+`Error::UR(String)` (TypeScript code `Decoder`): a bad bytewords checksum
+inside `UR::from_ur_string`, an empty payload, an odd-length minimal
+string. TypeScript reports `Bytewords` for those, keeps `InvalidType` when
+the type is bad, and `Cbor` for CBOR failures. `MultipartDecoder` also
+accepts a single-part UR string (completing on it) and lower-cases its
+input as `UR::from_ur_string` does, where the reference rejects both (the
+reference's multipart path is case-sensitive, so it cannot read an
+upper-case QR payload directly). Allowed for `urDecode` vectors where the
+reference says `Decoder` and TypeScript `Bytewords`, and for every
+explicit-part `mpDecode` vector.
+
+### 1.3 `bytewords.decode` is case-insensitive (D3)
+
+TypeScript lower-cases before decoding in every style; the reference
+accepts lower-case only outside `UR::from_ur_string`. Allowed for
+`bwDecode` vectors whose input contains upper-case letters.
 
 ## 2. JS-only input domain
 
-_To be documented as the surface is audited._
+- **Non-canonical CBOR in `UR.from`.** A `UR` is built from a decoded
+  `Cbor` value, so invalid or non-canonical bytes cannot reach it; the
+  corpus feeds only canonical dCBOR (`1.5` is `f93e00`, not the f64 form).
+- **`URType` accepts the empty string.** Both do (the failure surfaces
+  later, at decode, as `TypeUnspecified`).
 
 ## 3. Mapping equivalences
 
-_To be documented as the surface is audited._
+- **API shape.** `UR::new(type, cbor)` ↔ `UR.from(type, cbor)`;
+  `from_ur_string` ↔ `UR.parse`; `MultipartEncoder::new(&ur, max)` ↔ `new
+  MultipartEncoder(ur, max)`; `next_part` ↔ `nextPart`; `MultipartDecoder
+  receive/is_complete/message` ↔ `add/done/result`.
+- **Errors.** `Error::InvalidScheme` … `Error::UnexpectedType(a, b)` ↔
+  `URError` codes of the same name; `Error::UR(_)` ↔ `Decoder`;
+  `Error::Cbor(_)` ↔ `Cbor`.
+- **Part ordering in vectors.** Shuffles and drops use an xorshift defined
+  identically in `tests/vectors/recipes.ts` and the harness, so both sides
+  feed the same subsequence.
 
 ## Maintenance
 
