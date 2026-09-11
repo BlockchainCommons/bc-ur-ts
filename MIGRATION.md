@@ -1,13 +1,5 @@
 # Migrating from `@bcts/uniform-resources` to `@blockchaincommons/uniform-resources`
 
-`@blockchaincommons/uniform-resources` is the canonical home of this
-library. It was extracted from the
-[`paritytech/bcts`](https://github.com/paritytech/bcts) monorepo, where it
-was published as `@bcts/uniform-resources`, into its own Blockchain Commons
-repository at
-[`BlockchainCommons/bc-ur-ts`](https://github.com/BlockchainCommons/bc-ur-ts),
-and redesigned as an idiomatic TypeScript library in the same release.
-
 **Every string this package produces is unchanged.** Single-part URs, QR
 forms, every bytewords style, every multipart part string, and what the
 decoders accept are identical to `@bcts/uniform-resources`; 616 golden

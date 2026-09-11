@@ -22,8 +22,6 @@ yarn add @blockchaincommons/uniform-resources
 bun add @blockchaincommons/uniform-resources
 ```
 
-**Requirements:** TypeScript >= 5.7 is required to consume the published types. Node >= 22.12 is required.
-
 ## Usage Instructions
 
 ```typescript
@@ -91,7 +89,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 To build and work on this library, you'll need the following tools:
 
 - [Node.js](https://nodejs.org/) >= 22.12 - JavaScript runtime.
-- [Bun](https://bun.sh/) - used in CI to install dependencies and run scripts (any Node-compatible package manager also works).
+- [Bun](https://bun.sh/) - used to install dependencies and run scripts (any node package manager works).
 - [TypeScript](https://www.typescriptlang.org/) >= 5.7 - language and type checker.
 
 ### Derived from ...
@@ -99,7 +97,7 @@ To build and work on this library, you'll need the following tools:
 This `bc-ur-ts` project is either derived from or was inspired by:
 
 - [BlockchainCommons/bc-ur-rust](https://github.com/BlockchainCommons/bc-ur-rust) - The reference Rust implementation, by [Wolf McNally](https://github.com/wolfmcnally).
-- [paritytech/bcts](https://github.com/paritytech/bcts) - A TypeScript port covering many Blockchain Commons' implementations, by [Parity Technologies](https://github.com/paritytech).
+- [paritytech/bcts](https://github.com/paritytech/bcts) - A TypeScript port of many Blockchain Commons' specs, by [Parity Technologies](https://github.com/paritytech).
 
 ## Financial Support
 
