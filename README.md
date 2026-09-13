@@ -80,7 +80,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Version History
 
-- **1.0.0-beta.2 (September 12, 2026)** - Decoding follows the reference: `bytewords` decoding is case-sensitive, `MultipartDecoder` rejects single-part URs and reads the fountain fields from the CBOR (the header is parsed as two `u16`s, a leading `+` allowed), and a zero `maxFragmentLength` reports the reference's decoder error. See [`CHANGELOG.md`](./CHANGELOG.md).
+- **1.0.0-beta.2 (September 12, 2026)** - Decoding follows the reference: `bytewords` decoding is case-sensitive, `MultipartDecoder` rejects single-part URs and reads the fountain fields from the CBOR (the header is parsed as two `u16`s, a leading `+` allowed), and a zero `maxFragmentLength` reports the reference's decoder error.
 - **1.0.0-beta.1 (September 9, 2026)** - Initial beta implementation.
 
 ### Roadmap
