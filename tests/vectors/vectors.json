@@ -1,5 +1,5 @@
 {
- "count": 640,
+ "count": 643,
  "vectors": [
   {
    "name": "bwEncode standard len=0",
@@ -1985,7 +1985,7 @@
     "style": "standard",
     "s": "ACID ALSO APEX AQUA ARCH FUEL BALD NAIL WORK"
    },
-   "expect": "0102030405"
+   "expect": "throw:Bytewords"
   },
   {
    "name": "bwDecode uri \"acid-also-apex-aqua-arch\"",
@@ -2030,7 +2030,7 @@
     "style": "minimal",
     "s": "LSADAOAXJYGONESW"
    },
-   "expect": "83010203"
+   "expect": "throw:Bytewords"
   },
   {
    "name": "bwDecode minimal \"lsadaoaxjygones\"",
@@ -4447,6 +4447,14 @@
     "s": "ur:test/1-2/3/lsadaoaxjygonesw"
    },
    "expect": "throw:Decoder"
+  },
+  {
+   "name": "urDecode \"ur:test/+1-2/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/+1-2/lsadaoaxjygonesw"
+   },
+   "expect": "throw:NotSinglePart"
   },
   {
    "name": "urDecode \"http://test/lsadaoaxjygonesw\"",
@@ -7739,7 +7747,7 @@
     "maxLen": 0,
     "parts": 1
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:Decoder"
   },
   {
    "name": "mpEncode bytes 1B max=10 parts=1",
@@ -7775,7 +7783,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "done@1:test|83010203"
+   "expect": "throw:Decoder"
   },
   {
    "name": "mpDecode explicit 2 parts",
@@ -7786,7 +7794,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "done@1:test|83010203"
+   "expect": "throw:Decoder"
   },
   {
    "name": "mpDecode explicit 2 parts",
@@ -7797,7 +7805,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "done@1:other|83010203"
+   "expect": "throw:Decoder"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7837,7 +7845,7 @@
      "ur:Bad/lsadaoaxjygonesw"
     ]
    },
-   "expect": "done@1:bad|83010203"
+   "expect": "throw:Decoder"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7898,7 +7906,7 @@
      "ur:test/1-2/3/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Decoder"
   },
   {
    "name": "urEncode  cbor=83010203… (4B)",
@@ -8295,7 +8303,7 @@
     ],
     "note": "header-mismatch"
    },
-   "expect": "throw:Decoder"
+   "expect": "incomplete:1"
   },
   {
    "name": "mpDecode explicit 1 parts oversize-header",
@@ -8307,6 +8315,28 @@
     "note": "oversize-header"
    },
    "expect": "throw:Decoder"
+  },
+  {
+   "name": "mpDecode explicit 1 parts plus-header",
+   "recipe": {
+    "k": "mpDecode",
+    "parts": [
+     "ur:bytes/+1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd"
+    ],
+    "note": "plus-header"
+   },
+   "expect": "incomplete:1"
+  },
+  {
+   "name": "mpDecode explicit 1 parts upper-case",
+   "recipe": {
+    "k": "mpDecode",
+    "parts": [
+     "UR:BYTES/1-2/LPADAOAHCYZTDTDPFEFXFYADAOKBTPCSRD"
+    ],
+    "note": "upper-case"
+   },
+   "expect": "incomplete:1"
   }
  ]
 }

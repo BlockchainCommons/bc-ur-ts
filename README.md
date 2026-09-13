@@ -44,6 +44,11 @@ for (const part of encoder) {
 }
 decoder.result?.equals(ur); // true
 
+// A scanner that may see either kind dispatches on the `n-m/` header, as a
+// caller of the reference does: `MultipartDecoder` rejects a single-part UR.
+const isMultipart = (s: string) => /^ur:[^/]+\/\+?\d+-\+?\d+\//i.test(s);
+isMultipart("ur:test/lsadaoaxjygonesw"); // false → UR.parse(s)
+
 // Bytewords.
 encodeBytewords(new Uint8Array([1, 2, 3, 4, 5]), "standard"); // "acid also apex aqua arch fuel bald nail work"
 
@@ -75,6 +80,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Version History
 
+- **1.0.0-beta.2 (September 12, 2026)** - Decoding follows the reference: `bytewords` decoding is case-sensitive, `MultipartDecoder` rejects single-part URs and reads the fountain fields from the CBOR (the header is parsed as two `u16`s, a leading `+` allowed), and a zero `maxFragmentLength` reports the reference's decoder error.
 - **1.0.0-beta.1 (September 9, 2026)** - Initial beta implementation.
 
 ### Roadmap
@@ -89,7 +95,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 To build and work on this library, you'll need the following tools:
 
 - [Node.js](https://nodejs.org/) >= 22.12 - JavaScript runtime.
-- [Bun](https://bun.sh/) - used to install dependencies and run scripts (any node package manager works).
+- [Bun](https://bun.sh/) - used to install dependencies and run the TypeScript maintenance scripts.
 - [TypeScript](https://www.typescriptlang.org/) >= 5.7 - language and type checker.
 
 ### Derived from ...

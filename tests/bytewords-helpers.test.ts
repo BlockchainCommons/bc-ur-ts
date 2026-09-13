@@ -36,8 +36,8 @@ describe("identifier", () => {
   it("minimal: first+last letter of each word, no separator", () => {
     expect(identifier(bytes(0, 1, 2, 3), { style: "minimal" })).toBe("aeadaoax");
     for (let b = 0; b < 256; b++) {
-      const w = BYTEWORDS[b]!;
-      expect(identifier(bytes(b), { style: "minimal" })).toBe(w[0]! + w[3]!);
+      const w = BYTEWORDS[b];
+      expect(identifier(bytes(b), { style: "minimal" })).toBe(w[0] + w[3]);
     }
   });
 });
@@ -94,7 +94,7 @@ describe("canonicalizeByteword", () => {
     // aqua vs quad); first-three wins, as it always has.
     for (const w of BYTEWORDS) {
       expect(canonicalizeByteword(w)).toBe(w);
-      expect(canonicalizeByteword(w[0]! + w[3]!)).toBe(w);
+      expect(canonicalizeByteword(w[0] + w[3])).toBe(w);
       expect(canonicalizeByteword(w.slice(0, 3))).toBe(w);
     }
     expect(canonicalizeByteword("qua")).toBe("quad");

@@ -57,10 +57,12 @@ export function encodeBytewords(data: Uint8Array, style: BytewordsStyle = "minim
 }
 
 /**
- * Decode a bytewords string (any case) in `style`, verifying and stripping
- * the CRC-32.
- * @throws {URError} `Bytewords` for non-ASCII input, an unknown word, an
- * odd-length minimal string, or a checksum mismatch.
+ * Decode a lower-case bytewords string in `style`, verifying and stripping
+ * the CRC-32. Case-sensitive, as the reference's `bytewords::decode`; the
+ * UR parsers lower-case a whole UR string before reaching here.
+ * @throws {URError} `Bytewords` for non-ASCII input, an unknown word (an
+ * upper-case letter makes one), an odd-length minimal string, or a checksum
+ * mismatch.
  */
 export function decodeBytewords(
   encoded: string,
@@ -70,7 +72,10 @@ export function decodeBytewords(
     if (encoded.charCodeAt(i) > 0x7f)
       throw URError.bytewords("bytewords string contains non-ASCII characters");
   }
-  const s = encoded.toLowerCase();
+  // Case-sensitive, as the reference's `bytewords::decode` (its word tables
+  // are lower-case only). UR parsing lower-cases the whole UR string first,
+  // as `UR::from_ur_string` does; a bare bytewords string is not a UR.
+  const s = encoded;
   let bytes: Uint8Array;
   if (style === "minimal") {
     if (s.length % 2 !== 0) throw URError.bytewords("invalid length");

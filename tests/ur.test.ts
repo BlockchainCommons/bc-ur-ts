@@ -163,8 +163,13 @@ describe("bytewords", () => {
     expect(encodeBytewords(d)).toBe(encodeBytewords(d, "minimal"));
     for (const style of ["standard", "uri", "minimal"] as const) {
       expect(hex(decodeBytewords(encodeBytewords(d, style), style))).toBe("0102030405");
-      expect(hex(decodeBytewords(encodeBytewords(d, style).toUpperCase(), style))).toBe(
-        "0102030405",
+      // Case-sensitive, as the reference's `bytewords::decode` (D3 closed);
+      // `UR.parse` lower-cases a whole UR string before decoding its body.
+      expect(code(() => decodeBytewords(encodeBytewords(d, style).toUpperCase(), style))).toBe(
+        "Bytewords",
+      );
+      expect(() => decodeBytewords(encodeBytewords(d, style).toUpperCase(), style)).toThrow(
+        "invalid word",
       );
     }
     expect(encodeBytewords(new Uint8Array(0))).toBe(
@@ -209,7 +214,11 @@ describe("MultipartEncoder", () => {
     expect(e.index).toBe(4);
   });
   it("requires an integer maxFragmentLength of at least 1 (B3)", () => {
-    for (const max of [0, -1, 1.5, NaN, Infinity]) {
+    // Zero is representable in the reference (`usize`): its fountain
+    // encoder's `InvalidFragmentLen`, an `Error::UR` = `Decoder`.
+    expect(code(() => new MultipartEncoder(ur, 0))).toBe("Decoder");
+    expect(() => new MultipartEncoder(ur, 0)).toThrow("expected positive maximum fragment length");
+    for (const max of [-1, 1.5, NaN, Infinity]) {
       expect(code(() => new MultipartEncoder(ur, max))).toBe("InvalidParameter");
     }
     expect(() => new MultipartEncoder(ur, 1.5)).toThrow(
@@ -247,17 +256,47 @@ describe("MultipartEncoder", () => {
 });
 
 describe("MultipartDecoder", () => {
-  it("completes on a single-part string and reports progress", () => {
+  it("rejects a single-part string, as the reference does (D2-single closed)", () => {
     const d = new MultipartDecoder();
     expect(d.done).toBe(false);
     expect(d.result).toBeUndefined();
     expect(d.progress).toBe(0);
-    expect(d.add("ur:test/lsadaoaxjygonesw")).toBe(true);
-    expect(d.done).toBe(true);
-    expect(d.result?.toString()).toBe("ur:test/lsadaoaxjygonesw");
-    expect(d.add("ur:test/lsadaoaxjygonesw")).toBe(false);
-    d.reset();
+    expect(code(() => d.add("ur:test/lsadaoaxjygonesw"))).toBe("Decoder");
+    expect(() => d.add("ur:test/lsadaoaxjygonesw")).toThrow(
+      "Can't decode single-part UR as multi-part",
+    );
+    expect(code(() => d.add("ur:test"))).toBe("TypeUnspecified");
     expect(d.done).toBe(false);
+    // A single-part UR is `UR.parse`'s job.
+    expect(UR.parse("ur:test/lsadaoaxjygonesw").toString()).toBe("ur:test/lsadaoaxjygonesw");
+  });
+  it("parses the header at the last slash and accepts a leading + (the reference's u16::from_str)", () => {
+    const ur = UR.from("bytes", cbor(new Uint8Array(40)));
+    const e = new MultipartEncoder(ur, 10);
+    const p1 = e.nextPart();
+    // `ur:bytes/+1-5/…` is what `"+1".parse::<u16>()` accepts.
+    const plus = new MultipartDecoder();
+    expect(plus.add(p1.replace("/1-", "/+1-"))).toBe(true);
+    expect(plus.progress).toBeCloseTo(0.2);
+    // The reference splits at the LAST slash: "1-2/3" is the header.
+    expect(code(() => new MultipartDecoder().add("ur:test/1-2/3/lsadaoaxjygonesw"))).toBe(
+      "Decoder",
+    );
+    expect(() => new MultipartDecoder().add("ur:test/1-2/3/lsadaoaxjygonesw")).toThrow(
+      "Invalid indices",
+    );
+    // The header is informational (the reference parses it as two `u16`s
+    // and reads the fountain fields from the CBOR): a lying label is not an
+    // error (D2-header closed), a header beyond `u16` still is.
+    const lying = new MultipartDecoder();
+    expect(lying.add(p1.replace("/1-5/", "/2-5/"))).toBe(true);
+    expect(lying.done).toBe(false);
+    expect(code(() => new MultipartDecoder().add(p1.replace("/1-5/", "/70000-5/")))).toBe(
+      "Decoder",
+    );
+    lying.reset();
+    expect(lying.done).toBe(false);
+    expect(lying.progress).toBe(0);
   });
   it("rejects a changed type, bad scheme and bad type", () => {
     const ur = UR.from("bytes", cbor(new Uint8Array(40)));

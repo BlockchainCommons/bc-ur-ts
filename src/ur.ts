@@ -8,7 +8,8 @@ import { URError } from "./error.js";
 import { URType } from "./ur-type.js";
 import { encodeBytewords, decodeBytewords } from "./bytewords.js";
 
-const DIGITS = /^\d+$/;
+/** A header field as the reference's `u16::from_str` reads it: an optional `+`, then digits. */
+const DIGITS = /^\+?\d+$/;
 
 /**
  * A UR: a {@link URType} and a CBOR payload, spelled

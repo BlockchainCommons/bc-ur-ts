@@ -59,12 +59,12 @@ exports[`golden: bytewords styles > len 1024 1`] = `
 exports[`golden: error codes > malformed bytewords 1`] = `
 [
   "standard "acid also apex aqua arch fuel bald nail work" → 0102030405",
-  "standard "ACID ALSO APEX AQUA ARCH FUEL BALD NAIL WORK" → 0102030405",
+  "standard "ACID ALSO APEX AQUA ARCH FUEL BALD NAIL WORK" → throw:Bytewords",
   "uri "acid-also-apex-aqua-arch-fuel-bald-nail-work" → 0102030405",
   "uri "acid also apex aqua arch fuel bald nail work" → throw:Bytewords",
   "standard "acid-also-apex-aqua-arch-fuel-bald-nail-work" → throw:Bytewords",
   "minimal "lsadaoaxjygonesw" → 83010203",
-  "minimal "LSADAOAXJYGONESW" → 83010203",
+  "minimal "LSADAOAXJYGONESW" → throw:Bytewords",
   "minimal "lsadaoaxjygones" → throw:Bytewords",
   "minimal "lsadaoaxjygonezz" → throw:Bytewords",
   "minimal "lsadaoaxjygoneae" → throw:Bytewords",
@@ -80,19 +80,19 @@ exports[`golden: error codes > malformed bytewords 1`] = `
 
 exports[`golden: error codes > malformed multipart sequences 1`] = `
 [
-  "["ur:test/lsadaoaxjygonesw"] → done@1:test|83010203",
-  "["ur:test/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → done@1:test|83010203",
-  "["ur:other/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → done@1:other|83010203",
+  "["ur:test/lsadaoaxjygonesw"] → throw:Decoder",
+  "["ur:test/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → throw:Decoder",
+  "["ur:other/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → throw:Decoder",
   "["http://x"] → throw:InvalidScheme",
   "["ur:"] → throw:InvalidType",
   "["ur:/lsadaoaxjygonesw"] → throw:InvalidType",
-  "["ur:Bad/lsadaoaxjygonesw"] → done@1:bad|83010203",
+  "["ur:Bad/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/2-2/lsadaoaxjygonesw","ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-x/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/abc/lsadaoaxjygonesw"] → throw:Decoder",
-  "["ur:test/1-2/3/lsadaoaxjygonesw"] → throw:Bytewords",
+  "["ur:test/1-2/3/lsadaoaxjygonesw"] → throw:Decoder",
 ]
 `;
 
@@ -115,6 +115,7 @@ exports[`golden: error codes > malformed single-part strings 1`] = `
   ""ur:test/1/lsadaoaxjygonesw" → throw:Decoder",
   ""ur:test/70000-1/lsadaoaxjygonesw" → throw:Decoder",
   ""ur:test/1-2/3/lsadaoaxjygonesw" → throw:Decoder",
+  ""ur:test/+1-2/lsadaoaxjygonesw" → throw:NotSinglePart",
   ""http://test/lsadaoaxjygonesw" → throw:InvalidScheme",
   ""ur:test/zmzmaeaeae" → throw:Cbor",
   ""ur:test/lfadfhjetpnb" → throw:Cbor",
@@ -154,7 +155,7 @@ exports[`golden: freeze additions > B3: MultipartEncoder maxFragmentLength domai
 [
   "1.5: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got 1.5",
   "NaN: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got NaN",
-  "0: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got 0",
+  "0: throw:Decoder:UR decoder error (expected positive maximum fragment length)",
   "-1: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got -1",
   "Infinity: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got Infinity",
   "10: 1-3",
@@ -174,7 +175,7 @@ exports[`golden: freeze additions > B4: fountain part fields 1`] = `
 
 exports[`golden: freeze additions > B5: URL header vs CBOR header 1`] = `
 [
-  "header 2-2 on part 1-2: throw:Decoder:UR decoder error (Multipart metadata mismatch: URL says 2-2, CBOR says 1-2)",
+  "header 2-2 on part 1-2: true",
   "header 70000-70000 agreeing with CBOR: throw:Decoder:UR decoder error (Invalid indices)",
   "single-part parse of a 70000-1 header: throw:Decoder:UR decoder error (Invalid indices)",
 ]

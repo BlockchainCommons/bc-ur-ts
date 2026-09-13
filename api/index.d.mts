@@ -220,21 +220,25 @@ export declare class MultipartEncoder implements Iterable<string> {
 //#endregion
 //#region src/multipart-decoder.d.ts
 /**
- * Reassembles a UR from part strings in any order; a single-part string
- * completes it at once. Any case is accepted. A part is rejected when its
- * URL header is not two `u16`s or disagrees with its CBOR, when its fields
- * are inconsistent with earlier parts, and — once complete — when the
- * reassembled message's padding is not zero or its checksum fails.
+ * Reassembles a UR from part strings in any order. Any case is accepted
+ * (the whole string is lower-cased, as `UR::from_ur_string` does). A part
+ * is rejected when it is a single-part UR (decode those with `UR.parse`;
+ * the reference's `MultipartDecoder` rejects them too), when its URL header
+ * is not two `u16`s, when its fields are inconsistent with earlier parts,
+ * and — once complete — when the reassembled message's padding is not zero
+ * or its checksum fails. The header is otherwise informational: the
+ * fountain fields come from the part's CBOR, as in the reference.
  */
 export declare class MultipartDecoder {
   #private;
   /**
    * Feed a part (any case). Returns whether it added information.
-   * @throws {URError} `InvalidScheme`, `InvalidType`, `UnexpectedType` when
-   * the type differs from earlier parts, `Bytewords`, `Cbor`, or `Decoder`
-   * (a header that is not two `u16`s — "Invalid indices" — or that disagrees
-   * with the CBOR, a part field outside `u32`, an inconsistent part, and on
-   * completion non-zero padding or a checksum mismatch).
+   * @throws {URError} `InvalidScheme`, `TypeUnspecified`, `InvalidType`,
+   * `UnexpectedType` when the type differs from earlier parts, `Bytewords`,
+   * `Cbor`, or `Decoder` (a single-part UR — "Can't decode single-part UR as
+   * multi-part" —, a header that is not two `u16`s — "Invalid indices" —, a
+   * part field outside `u32`, an inconsistent part, and on completion
+   * non-zero padding or a checksum mismatch).
    */
   add(part: string): boolean;
   /** Whether the UR has been reassembled. */
