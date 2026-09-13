@@ -66,19 +66,19 @@ describe("golden: multipart", () => {
 describe("golden: error codes", () => {
   it("malformed single-part strings", () => {
     const out: string[] = [];
-    for (const r of categories["ur"]!())
+    for (const r of categories["ur"]())
       if (r.k === "urDecode") out.push(`${JSON.stringify(r.s)} → ${run(r)}`);
     expect(out).toMatchSnapshot();
   });
   it("malformed bytewords", () => {
     const out: string[] = [];
-    for (const r of categories["bytewords"]!())
+    for (const r of categories["bytewords"]())
       if (r.k === "bwDecode") out.push(`${r.style} ${JSON.stringify(r.s)} → ${run(r)}`);
     expect(out).toMatchSnapshot();
   });
   it("malformed multipart sequences", () => {
     const out: string[] = [];
-    for (const r of categories["decodeErrors"]!())
+    for (const r of categories["decodeErrors"]())
       if (r.k === "mpDecode" && "parts" in r) out.push(`${JSON.stringify(r.parts)} → ${run(r)}`);
     expect(out).toMatchSnapshot();
   });

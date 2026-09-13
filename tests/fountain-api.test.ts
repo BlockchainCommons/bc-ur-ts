@@ -35,7 +35,7 @@ describe("FountainEncoder", () => {
     expect(e.done).toBe(false);
     expect(new FountainEncoder(msg, 1000).isSinglePart).toBe(true);
   });
-  it("rejects an empty message and a fragment length that is not an integer ≥ 1 (InvalidParameter)", () => {
+  it("rejects an empty message and a fragment length that is not an integer ≥ 1", () => {
     const code = (f: () => unknown): string | undefined => {
       try {
         f();
@@ -44,9 +44,18 @@ describe("FountainEncoder", () => {
         return URError.isURError(e) ? e.code : (e as Error).name;
       }
     };
-    expect(code(() => new FountainEncoder(new Uint8Array(0), 10))).toBe("InvalidParameter");
-    for (const max of [0, 1.5, NaN]) {
+    // The `ur` crate's `fountain::Encoder::new`, in its order: `EmptyMessage`,
+    // then `InvalidFragmentLen` — both `Error::UR`, so `Decoder` here.
+    expect(code(() => new FountainEncoder(new Uint8Array(0), 10))).toBe("Decoder");
+    expect(() => new FountainEncoder(new Uint8Array(0), 0)).toThrow("expected non-empty message");
+    expect(code(() => new FountainEncoder(msg, 0))).toBe("Decoder");
+    expect(() => new FountainEncoder(msg, 0)).toThrow("expected positive maximum fragment length");
+    for (const max of [1.5, NaN]) {
       expect(code(() => new FountainEncoder(msg, max))).toBe("InvalidParameter");
+    }
+    // `splitMessage` / `partition` mirror crate-private helpers with no
+    // reference outcome: the JS domain check applies to 0 as well.
+    for (const max of [0, 1.5, NaN]) {
       expect(code(() => splitMessage(msg, max))).toBe("InvalidParameter");
       expect(code(() => partition(msg, max))).toBe("InvalidParameter");
     }

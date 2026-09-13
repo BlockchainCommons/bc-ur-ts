@@ -182,7 +182,11 @@ export class FountainEncoder implements Iterable<FountainPart> {
    * `maxFragmentLen` is an integer ≥ 1.
    */
   constructor(message: Uint8Array, maxFragmentLen: number) {
-    if (message.length === 0) throw URError.invalidParameter("message", 0, "non-empty");
+    // The `ur` crate's `fountain::Encoder::new`, in its order: an empty
+    // message is `EmptyMessage`, a zero length `InvalidFragmentLen` (both
+    // `Error::UR` = `Decoder`); the rest of the JS domain is `InvalidParameter`.
+    if (message.length === 0) throw URError.decoder("expected non-empty message");
+    if (maxFragmentLen === 0) throw URError.decoder("expected positive maximum fragment length");
     expectInt("maxFragmentLength", maxFragmentLen, POSITIVE);
     this.#messageLen = message.length;
     this.#checksum = crc32(message);

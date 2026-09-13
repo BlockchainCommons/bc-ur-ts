@@ -32,14 +32,18 @@ describe("ur properties", () => {
       { numRuns: 200 },
     );
   });
-  it("every bytewords style round-trips, case-insensitively", () => {
+  it("every bytewords style round-trips; decoding is case-sensitive as the reference's", () => {
     fc.assert(
       fc.property(bytes, fc.constantFrom("standard", "uri", "minimal" as const), (b, style) => {
         const s = api.bwEncode(b, style);
-        return (
-          hex(api.bwDecode(s, style)) === hex(b) &&
-          hex(api.bwDecode(s.toUpperCase(), style)) === hex(b)
-        );
+        let upper: string;
+        try {
+          api.bwDecode(s.toUpperCase(), style);
+          upper = "accepted";
+        } catch (e) {
+          upper = src.URError.isURError(e) ? e.code : "other";
+        }
+        return hex(api.bwDecode(s, style)) === hex(b) && upper === "Bytewords";
       }),
       { numRuns: 200 },
     );
@@ -121,20 +125,24 @@ describe("ur properties", () => {
     );
   });
   it("every constructor and decoder argument fault is a URError InvalidParameter", () => {
+    // Zero is the one value the reference's `usize` can receive: the
+    // encoders report its `Decoder` ("expected positive maximum fragment
+    // length"); the crate-private helpers keep the JS-domain check.
     const bad = fc.oneof(
-      fc.constantFrom(NaN, Infinity, -Infinity, 0),
+      fc.constantFrom(NaN, Infinity, -Infinity),
       fc.double({ noInteger: true, noNaN: true }),
       fc.integer({ max: -1 }),
     );
     const ur = src.UR.from("bytes", cbor(cborBstr(new Uint8Array(10))));
-    const isInvalidParameter = (f: () => unknown): boolean => {
+    const codeOf = (f: () => unknown): string | undefined => {
       try {
         f();
-        return false;
+        return undefined;
       } catch (e) {
-        return src.URError.isURError(e) && e.is("InvalidParameter");
+        return src.URError.isURError(e) ? e.code : "other";
       }
     };
+    const isInvalidParameter = (f: () => unknown): boolean => codeOf(f) === "InvalidParameter";
     fc.assert(
       fc.property(
         bad,
@@ -145,6 +153,10 @@ describe("ur properties", () => {
           isInvalidParameter(() => fountain.splitMessage(new Uint8Array(10), v)),
       ),
     );
+    expect(codeOf(() => new src.MultipartEncoder(ur, 0))).toBe("Decoder");
+    expect(codeOf(() => new fountain.FountainEncoder(new Uint8Array(10), 0))).toBe("Decoder");
+    expect(codeOf(() => fountain.partition(new Uint8Array(10), 0))).toBe("InvalidParameter");
+    expect(codeOf(() => fountain.splitMessage(new Uint8Array(10), 0))).toBe("InvalidParameter");
     fc.assert(
       fc.property(
         fc.uint8Array({ maxLength: 12 }).filter((b) => b.length !== 4),

@@ -159,6 +159,7 @@ function* ur(): Generator<Recipe> {
     "ur:test/1/lsadaoaxjygonesw",
     "ur:test/70000-1/lsadaoaxjygonesw",
     "ur:test/1-2/3/lsadaoaxjygonesw",
+    "ur:test/+1-2/lsadaoaxjygonesw",
     "http://test/lsadaoaxjygonesw",
     "ur:test/" + STRINGS.badCborBreak,
     "ur:test/" + STRINGS.badCborTruncated,
@@ -277,6 +278,10 @@ function* domain(): Generator<Recipe> {
   // B5
   yield { k: "mpDecode", parts: [PARTS.P1_AS_2_2], note: "header-mismatch" };
   yield { k: "mpDecode", parts: [PARTS.BIG_HEADER], note: "oversize-header" };
+  yield { k: "mpDecode", parts: [PARTS.PLUS_HEADER], note: "plus-header" };
+  // D2-case: the reference's multipart decoder never lower-cases (its
+  // `from_ur_string` does); the port reads an upper-case QR payload.
+  yield { k: "mpDecode", parts: [PARTS.P1.toUpperCase()], note: "upper-case" };
 }
 
 export const categories: Record<string, () => Generator<Recipe>> = {

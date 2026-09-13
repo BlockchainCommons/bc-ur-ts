@@ -25,8 +25,10 @@ export const PARTS = {
   P1: "ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
   /** Part 2 of 2 whose padding byte is `0xff` (B1). */
   PADDED_2: "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm",
-  /** Part 1 of 2 relabelled `2-2` in the URL (B5). */
+  /** Part 1 of 2 relabelled `2-2` in the URL; the reference ignores the label (it parses it as two `u16`s and reads the CBOR). */
   P1_AS_2_2: "ur:bytes/2-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
+  /** Part 1 of 2 with a `+` in the header, which `u16::from_str` accepts. */
+  PLUS_HEADER: "ur:bytes/+1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
   /** A part whose URL header and CBOR both say `70000-70000` (B5, beyond `u16`). */
   BIG_HEADER: "ur:bytes/70000-70000/lpcyaeadbyjocyaeadbyjoahcyztdtdpfefxfyadaojsrtkoze",
   /** URL `1-1`, CBOR `seqNum` 2^40 (B4 on the wire). */

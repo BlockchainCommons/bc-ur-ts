@@ -4,6 +4,7 @@
  * @module multipart-encoder
  */
 import type { UR } from "./ur.js";
+import { URError } from "./error.js";
 import { POSITIVE, expectInt } from "./domain.js";
 import { FountainEncoder, encodeFountainPart, type FountainPart } from "./fountain.js";
 import { encodeBytewords } from "./bytewords.js";
@@ -26,6 +27,12 @@ export class MultipartEncoder implements Iterable<string> {
    * @throws {URError} `InvalidParameter` unless `maxFragmentLength` is an integer ≥ 1.
    */
   constructor(ur: UR, maxFragmentLength: number) {
+    // Zero is a value the reference's `usize` can receive: its fountain
+    // encoder reports `InvalidFragmentLen` (`Error::UR`); the rest of the
+    // JS domain (`NaN`, fractions, negatives) is `InvalidParameter`.
+    if (maxFragmentLength === 0) {
+      throw URError.decoder("expected positive maximum fragment length");
+    }
     expectInt("maxFragmentLength", maxFragmentLength, POSITIVE);
     this.#type = ur.type.name;
     this.#fountain = new FountainEncoder(ur.cbor.toData(), maxFragmentLength);

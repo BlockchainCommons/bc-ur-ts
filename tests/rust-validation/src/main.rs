@@ -139,27 +139,20 @@ fn run(r: &serde_json::Value) -> String {
 /// complete on an EARLIER part than the `ur` crate's decoder, or complete
 /// where the reference is still incomplete; the payload is identical.
 ///
-/// D2, three precise shapes (the blanket "any explicit-part difference"
-/// rule is gone):
-///   D2-single — `MultipartDecoder` accepts a single-part string (the first
-///     part has no `n-m/` header): TypeScript `done@1`, Rust `Decoder`.
-///   D2-case   — an input with upper-case letters: TypeScript lower-cases,
-///     Rust rejects.
+/// D2, two shapes (D2-single, D2-arg and D2-header closed with 1.0.0-beta.2;
+/// their rows must match):
+///   D2-case   — `MultipartDecoder::receive` never lower-cases (a reference
+///     defect; `UR::from_ur_string` does): an input with upper-case letters
+///     is read here and rejected there.
 ///   D2-code   — Rust collapses everything raised inside the `ur` crate to
 ///     `Error::UR(_)` (`Decoder`); TypeScript reports the finer code
 ///     (`Bytewords`, `Cbor`, `InvalidType`, `TypeUnspecified`,
 ///     `InvalidScheme`, `NotSinglePart`).
-///   D2-arg    — `maxFragmentLength == 0`: Rust `Decoder`, TypeScript an
-///     argument-domain error (`RangeError`, `InvalidParameter` after
-///     Phase 3 W3).
-///   D2-header — a part whose URL header disagrees with its CBOR: Rust
-///     ignores the header, TypeScript rejects (`Decoder`).
 ///
-/// D3: `bytewords::decode` is case-insensitive in TypeScript (the reference
-/// only lower-cases inside `UR::from_ur_string`).
+/// (D3 — case-insensitive `bytewords::decode` — closed with 1.0.0-beta.2.)
 ///
 /// D4: the empty UR type: Rust accepts `ur:/…`, TypeScript rejects it
-/// (`InvalidType`) once Phase 3 W2 lands.
+/// (`InvalidType`), BCR-2020-005 being the contract.
 
 fn expected_divergence(r: &serde_json::Value, got: &str, want: &str) -> Option<&'static str> {
     let k = r["k"].as_str().unwrap_or("");
@@ -180,11 +173,12 @@ fn expected_divergence(r: &serde_json::Value, got: &str, want: &str) -> Option<&
         _ if empty_type && want == "throw:InvalidType" && !got.starts_with("throw:") => Some("D4"),
         "mpDecode" if r.get("parts").is_some() => {
             let parts: Vec<&str> = r["parts"].as_array().unwrap().iter().map(|s| s.as_str().unwrap()).collect();
-            let first_single = parts.first().map_or(false, |p| p.strip_prefix("ur:").and_then(|b| b.split_once('/')).map_or(false, |(_, rest)| !rest.contains('/')));
             match note {
-                "header-mismatch" if want == "throw:Decoder" && !got.starts_with("throw:") => Some("D2-header"),
-                _ if got == "throw:Decoder" && first_single && done(want).map_or(false, |(n, _)| n == 1) => Some("D2-single"),
-                _ if got.starts_with("throw:") && parts.iter().any(|p| has_upper(p)) && !want.starts_with("throw:") => Some("D2-case"),
+                // D2-case: an upper-case part is read here and rejected there (`InvalidScheme` for
+                // `UR:`, `InvalidType` for an upper-case type — in the latter case TypeScript
+                // lower-cases and then reports whatever comes next, e.g. `Decoder` for a
+                // single-part string).
+                _ if parts.iter().any(|p| has_upper(p)) && ((got.starts_with("throw:") && !want.starts_with("throw:")) || got == "throw:InvalidType") => Some("D2-case"),
                 _ if got == "throw:Decoder" && finer(want) => Some("D2-code"),
                 _ => None,
             }
@@ -195,8 +189,6 @@ fn expected_divergence(r: &serde_json::Value, got: &str, want: &str) -> Option<&
             _ => None,
         },
         "urDecode" if got == "throw:Decoder" && finer(want) => Some("D2-code"),
-        "mpEncode" if r["maxLen"].as_u64() == Some(0) && got == "throw:Decoder" && (want == "throw:RangeError" || want == "throw:InvalidParameter") => Some("D2-arg"),
-        "bwDecode" if got == "throw:Bytewords" && has_upper(r["s"].as_str().unwrap()) => Some("D3"),
         _ => None,
     }
 }

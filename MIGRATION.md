@@ -1,11 +1,6 @@
 # Migrating from `@bcts/uniform-resources` to `@blockchaincommons/uniform-resources`
 
-**Every string this package produces is unchanged.** Single-part URs, QR
-forms, every bytewords style, every multipart part string, and what the
-decoders accept are identical to `@bcts/uniform-resources`; 616 golden
-vectors, a differential corpus against the frozen pre-redesign bundle, and
-a Rust cross-validation harness against `bc-ur 0.19.2` enforce that. What
-changed is the shape of the API and the dcbor it builds on.
+`@blockchaincommons/uniform-resources` is the redesigned successor to `@bcts/uniform-resources`.
 
 ## TL;DR checklist
 
@@ -18,6 +13,11 @@ changed is the shape of the API and the dcbor it builds on.
 - [ ] Bytewords moved to the `/bytewords` subpath; `BytewordsStyle.Minimal` → `"minimal"`.
 - [ ] `MultipartDecoder.receive/isComplete/message()` → `add/done/result`;
       `MultipartEncoder.currentIndex()/partsCount()` → `index/partCount`, and it is iterable.
+      Since 1.0.0-beta.2 `add` rejects a single-part UR (`Decoder`, as the reference's
+      `MultipartDecoder` does) — parse those with `UR.parse` — and no longer compares the
+      `n-m/` header with the part's CBOR (the reference reads the fountain fields from the CBOR).
+- [ ] `decodeBytewords` is case-sensitive since 1.0.0-beta.2 (the reference's `bytewords::decode`);
+      `UR.parse` and `MultipartDecoder.add` still lower-case a whole UR string.
 - [ ] Catch one `URError` and switch on `code`; the nine error classes,
       `Result` and `isError` are gone.
 - [ ] `UREncodable`/`URDecodable`/`URCodable` → `ToUR`, `urFor(value)`, `decodeURWith(ur, codec)`.
