@@ -85,11 +85,10 @@ describe("golden: error codes", () => {
 });
 
 /**
- * Freeze additions: what the decoders and constructors accept, recorded
- * verbatim so a regression is a visible diff. Every outcome below is one
- * B1–B5 / A1 / A3 finding.
+ * Acceptance snapshots: what the decoders and constructors accept, recorded
+ * verbatim so a regression is a visible diff.
  */
-describe("golden: freeze additions", () => {
+describe("golden: acceptance", () => {
   const outcome = (f: () => unknown): string => {
     try {
       const r = f();
@@ -112,7 +111,7 @@ describe("golden: freeze additions", () => {
     return [e.nextPart(), e.nextPart()] as const;
   };
 
-  it("B1: a part whose padding is not zero", () => {
+  it("a part whose padding is not zero", () => {
     const [p1, p2] = twoFragments();
     expect([message.length, p2.data.length]).toEqual([5, 3]);
     const padded = { ...p2, data: Uint8Array.from(p2.data) };
@@ -134,7 +133,7 @@ describe("golden: freeze additions", () => {
     ]).toMatchSnapshot();
   });
 
-  it("B2: the empty UR type", () => {
+  it("the empty UR type", () => {
     expect([
       `new URType(""): ${outcome(() => `name=${JSON.stringify(new src.URType("").name)}`)}`,
       `UR.from("", [1,2,3]).toString(): ${outcome(() => src.UR.from("", cbor([1, 2, 3])).toString())}`,
@@ -146,7 +145,7 @@ describe("golden: freeze additions", () => {
     ]).toMatchSnapshot();
   });
 
-  it("B3: MultipartEncoder maxFragmentLength domain", () => {
+  it("MultipartEncoder maxFragmentLength domain", () => {
     const ur = src.UR.from("bytes", cbor(Uint8Array.from({ length: 20 }, (_, i) => i)));
     const first = (max: number) =>
       outcome(() => new src.MultipartEncoder(ur, max).nextPart().split("/")[1]);
@@ -160,7 +159,7 @@ describe("golden: freeze additions", () => {
     ]).toMatchSnapshot();
   });
 
-  it("B4: fountain part fields", () => {
+  it("fountain part fields", () => {
     const data = Uint8Array.from([1, 2, 3, 4, 5]);
     const checksum = crc32(data);
     const add = (seqNum: number, seqLen = 1) =>
@@ -179,7 +178,7 @@ describe("golden: freeze additions", () => {
     ]).toMatchSnapshot();
   });
 
-  it("B5: URL header vs CBOR header", () => {
+  it("URL header vs CBOR header", () => {
     const [p1] = twoFragments();
     const s1 = partString(p1);
     const big = { ...p1, seqNum: 70000, seqLen: 70000 };
@@ -193,7 +192,7 @@ describe("golden: freeze additions", () => {
     ]).toMatchSnapshot();
   });
 
-  it("A1/A3: bridge and identifier argument faults", () => {
+  it("bridge and identifier argument faults", () => {
     const unnamed = { cborTags: () => [Tag.from(999)], toCbor: () => taggedValue(999, cbor(1)) };
     const tagless: CborCodec<Cbor> = { encode: (c) => c, decode: (c) => c };
     expect([

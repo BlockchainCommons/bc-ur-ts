@@ -9,6 +9,7 @@ import {
   Tag,
   taggedValue,
   type CborCodec,
+  CborError,
   expectText,
   expectTaggedContent,
   asTaggedValue,
@@ -36,12 +37,17 @@ const code = (f: () => unknown): string => {
 };
 
 describe("URType", () => {
-  it("accepts one or more lowercase letters, digits and hyphens", () => {
+  it("accepts lowercase letters, digits and hyphens", () => {
     for (const s of ["test", "abc123", "crypto-seed", "a", "a-b-c"])
       expect(new URType(s).name).toBe(s);
   });
-  it("rejects anything else, including the empty string (D4)", () => {
-    for (const s of ["Test", "te st", "te_st", "tést", "ur:", ""]) {
+  it("accepts the empty string, as the reference's URType::new does", () => {
+    expect(new URType("").name).toBe("");
+    expect(URType.isValid("")).toBe(true);
+    expect(URType.tryFrom("").ok).toBe(true);
+  });
+  it("rejects anything else", () => {
+    for (const s of ["Test", "te st", "te_st", "tést", "ur:"]) {
       expect(code(() => new URType(s))).toBe("InvalidType");
       expect(URType.isValid(s)).toBe(false);
       const r = URType.tryFrom(s);
@@ -85,11 +91,17 @@ describe("UR", () => {
     expect(ur.type.name).toBe("user");
     expect(UR.parse(ur.toString()).equals(ur)).toBe(true);
   });
-  it("equals compares type and bytes", () => {
+  it("equals compares the type and the CBOR structurally, as the reference's PartialEq", () => {
     const a = UR.from("test", arr);
     expect(a.equals(UR.from("test", cbor([1, 2, 3])))).toBe(true);
     expect(a.equals(UR.from("other", arr))).toBe(false);
     expect(a.equals(UR.from("test", cbor([1, 2])))).toBe(false);
+    // Two spellings of the same text encode to the same string but are different values.
+    const nfd = UR.from("test", cbor("e\u0301"));
+    const nfc = UR.from("test", cbor("\u00e9"));
+    expect(nfd.toString()).toBe(nfc.toString());
+    expect(nfd.equals(nfc)).toBe(false);
+    expect(UR.parse(nfd.toString()).equals(UR.parse(nfc.toString()))).toBe(true);
   });
   it("isType / expectType", () => {
     const ur = UR.from("test", arr);
@@ -115,9 +127,12 @@ describe("UR", () => {
       ["ur:te_st/zzzz", "InvalidType", "invalid UR type"],
       ["ur:test/1-2/lsadaoaxjygonesw", "NotSinglePart", "UR is not a single-part"],
       ["ur:test/1-x/lsadaoaxjygonesw", "Decoder", "UR decoder error (Invalid indices)"],
-      ["ur:test/lsadaoaxjygonese", "Bytewords", "Bytewords error (invalid checksum)"],
-      ["ur:test/lsadaoaxjygonesx", "Bytewords", "Bytewords error (invalid word)"],
-      ["ur:test/lsadaoaxjygones", "Bytewords", "Bytewords error (invalid length)"],
+      // A well-formed header: the payload is decoded before NotSinglePart.
+      ["ur:test/1-2/zz", "Decoder", "UR decoder error (invalid word)"],
+      ["ur:test/lsadaoaxjygonese", "Decoder", "UR decoder error (invalid checksum)"],
+      ["ur:test/lsadaoaxjygonesx", "Decoder", "UR decoder error (invalid word)"],
+      ["ur:test/lsadaoaxjygones", "Decoder", "UR decoder error (invalid length)"],
+      ["ur:test/lsadaoaxjygonesw\u00e9", "Decoder", "non-ASCII"],
       ["ur:test/zmzmaeaeae", "Cbor", "CBOR error ("],
     ];
     for (const [s, c, msg] of cases) {
@@ -146,11 +161,14 @@ describe("UR", () => {
     expect(URError.isURError(new Error("x"))).toBe(false);
     expect(URError.isURError({ name: "URError", code: "x" })).toBe(false);
   });
-  it("the empty type is rejected everywhere it can appear (B2)", () => {
-    expect(code(() => UR.from("", cbor([1, 2, 3])))).toBe("InvalidType");
-    expect(code(() => UR.parse("ur:/lsadaoaxjygonesw"))).toBe("InvalidType");
-    expect(code(() => UR.encodeBytes("", new Uint8Array(1)))).toBe("InvalidType");
-    expect(code(() => new MultipartDecoder().add("ur:/lsadaoaxjygonesw"))).toBe("InvalidType");
+  it("the empty type is accepted everywhere it can appear, as in the reference", () => {
+    expect(UR.from("", cbor([1, 2, 3])).toString()).toBe("ur:/lsadaoaxjygonesw");
+    const parsed = UR.parse("ur:/lsadaoaxjygonesw");
+    expect([parsed.type.name, hex(parsed.cbor.toData())]).toEqual(["", "83010203"]);
+    expect(UR.encodeBytes("", encodeCbor([1, 2, 3]))).toBe("ur:/lsadaoaxjygonesw");
+    expect(() => UR.from("test", arr).expectType("")).toThrow("expected UR type , but found test");
+    // A single-part string is still not a multipart part.
+    expect(code(() => new MultipartDecoder().add("ur:/lsadaoaxjygonesw"))).toBe("Decoder");
   });
 });
 
@@ -163,8 +181,8 @@ describe("bytewords", () => {
     expect(encodeBytewords(d)).toBe(encodeBytewords(d, "minimal"));
     for (const style of ["standard", "uri", "minimal"] as const) {
       expect(hex(decodeBytewords(encodeBytewords(d, style), style))).toBe("0102030405");
-      // Case-sensitive, as the reference's `bytewords::decode` (D3 closed);
-      // `UR.parse` lower-cases a whole UR string before decoding its body.
+      // Case-sensitive, as the reference's `bytewords::decode`; `UR.parse`
+      // lower-cases a whole UR string before decoding its body.
       expect(code(() => decodeBytewords(encodeBytewords(d, style).toUpperCase(), style))).toBe(
         "Bytewords",
       );
@@ -213,7 +231,7 @@ describe("MultipartEncoder", () => {
     expect(more.map((p) => p.split("/")[1])).toEqual(["2-5", "3-5", "4-5"]);
     expect(e.index).toBe(4);
   });
-  it("requires an integer maxFragmentLength of at least 1 (B3)", () => {
+  it("requires a maxFragmentLength that is a safe integer or a bigint in the reference's usize, at least 1", () => {
     // Zero is representable in the reference (`usize`): its fountain
     // encoder's `InvalidFragmentLen`, an `Error::UR` = `Decoder`.
     expect(code(() => new MultipartEncoder(ur, 0))).toBe("Decoder");
@@ -222,8 +240,13 @@ describe("MultipartEncoder", () => {
       expect(code(() => new MultipartEncoder(ur, max))).toBe("InvalidParameter");
     }
     expect(() => new MultipartEncoder(ur, 1.5)).toThrow(
-      "maxFragmentLength must be an integer in [1, 9007199254740991], got 1.5",
+      "maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got 1.5",
     );
+    // The reference's `usize` reaches 2^64 - 1: a bigint carries it exactly.
+    expect(new MultipartEncoder(ur, 9007199254740992n).nextPart().split("/")[1]).toBe("1-1");
+    expect(new MultipartEncoder(ur, 2n ** 64n - 1n).partCount).toBe(1);
+    expect(code(() => new MultipartEncoder(ur, 2 ** 53))).toBe("InvalidParameter");
+    expect(code(() => new MultipartEncoder(ur, 2n ** 64n))).toBe("InvalidParameter");
     try {
       new MultipartEncoder(ur, NaN);
     } catch (e) {
@@ -234,9 +257,8 @@ describe("MultipartEncoder", () => {
       });
     }
   });
-  it("round-trips through the decoder from any start part (Rust test_fountain, D1)", () => {
-    // Rust completes at 5, 61, 110, 507; ours peels further (RUST_DIVERGENCES §1.1).
-    const expected: Record<number, number> = { 1: 5, 51: 57, 101: 108, 501: 507 };
+  it("round-trips through the decoder from any start part, completing where the reference's test_fountain does", () => {
+    const expected: Record<number, number> = { 1: 5, 51: 61, 101: 110, 501: 507 };
     for (const [start, at] of Object.entries(expected)) {
       const e = new MultipartEncoder(ur, 10);
       const d = new MultipartDecoder();
@@ -256,7 +278,8 @@ describe("MultipartEncoder", () => {
 });
 
 describe("MultipartDecoder", () => {
-  it("rejects a single-part string, as the reference does (D2-single closed)", () => {
+  const p1of1 = "ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge";
+  it("rejects a single-part string, as the reference does", () => {
     const d = new MultipartDecoder();
     expect(d.done).toBe(false);
     expect(d.result).toBeUndefined();
@@ -265,7 +288,9 @@ describe("MultipartDecoder", () => {
     expect(() => d.add("ur:test/lsadaoaxjygonesw")).toThrow(
       "Can't decode single-part UR as multi-part",
     );
-    expect(code(() => d.add("ur:test"))).toBe("TypeUnspecified");
+    // The reference's `ur::decode` reports a missing slash, and a bad body is reported before the kind.
+    expect(() => d.add("ur:test")).toThrow("UR decoder error (No type specified)");
+    expect(() => d.add("ur:test/zz")).toThrow("UR decoder error (invalid word)");
     expect(d.done).toBe(false);
     // A single-part UR is `UR.parse`'s job.
     expect(UR.parse("ur:test/lsadaoaxjygonesw").toString()).toBe("ur:test/lsadaoaxjygonesw");
@@ -279,15 +304,15 @@ describe("MultipartDecoder", () => {
     expect(plus.add(p1.replace("/1-", "/+1-"))).toBe(true);
     expect(plus.progress).toBeCloseTo(0.2);
     // The reference splits at the LAST slash: "1-2/3" is the header.
-    expect(code(() => new MultipartDecoder().add("ur:test/1-2/3/lsadaoaxjygonesw"))).toBe(
-      "Decoder",
-    );
     expect(() => new MultipartDecoder().add("ur:test/1-2/3/lsadaoaxjygonesw")).toThrow(
-      "Invalid indices",
+      "UR decoder error (Invalid indices)",
     );
+    // The header is checked before the payload's bytewords.
+    expect(() => new MultipartDecoder().add("ur:test/1-x/zz")).toThrow("Invalid indices");
+    expect(() => new MultipartDecoder().add("ur:test/1-2/zz")).toThrow("invalid word");
     // The header is informational (the reference parses it as two `u16`s
     // and reads the fountain fields from the CBOR): a lying label is not an
-    // error (D2-header closed), a header beyond `u16` still is.
+    // error, a header beyond `u16` still is.
     const lying = new MultipartDecoder();
     expect(lying.add(p1.replace("/1-5/", "/2-5/"))).toBe(true);
     expect(lying.done).toBe(false);
@@ -298,7 +323,18 @@ describe("MultipartDecoder", () => {
     expect(lying.done).toBe(false);
     expect(lying.progress).toBe(0);
   });
-  it("rejects a changed type, bad scheme and bad type", () => {
+  it("is case-sensitive, as the reference's receive (lower-case a QR payload first)", () => {
+    expect(() => new MultipartDecoder().add(p1of1.toUpperCase())).toThrow("invalid UR scheme");
+    expect(() => new MultipartDecoder().add("UR:" + p1of1.slice(3))).toThrow("invalid UR scheme");
+    expect(() => new MultipartDecoder().add(p1of1.replace("bytes", "BYTES"))).toThrow(
+      "invalid UR type",
+    );
+    expect(() => new MultipartDecoder().add(p1of1.slice(0, -4) + "GSPKGE")).toThrow("invalid word");
+    const d = new MultipartDecoder();
+    expect(d.add(p1of1.toUpperCase().toLowerCase())).toBe(true);
+    expect(d.done).toBe(true);
+  });
+  it("rejects a changed type, bad scheme and bad type; a failed first part still sets the type", () => {
     const ur = UR.from("bytes", cbor(new Uint8Array(40)));
     const e = new MultipartEncoder(ur, 10);
     const d = new MultipartDecoder();
@@ -307,14 +343,68 @@ describe("MultipartDecoder", () => {
       "UnexpectedType",
     );
     expect(code(() => d.add("http://x"))).toBe("InvalidScheme");
-    expect(code(() => d.add("ur:/x"))).toBe("InvalidType");
-    expect(code(() => d.add("ur:bytes/2-4/lsadaoaxjygonesw"))).toBe("Decoder");
+    expect(code(() => d.add("ur:b_d/x"))).toBe("InvalidType");
+    // The empty type is a valid type that differs from the stored one.
+    expect(code(() => d.add("ur:/x"))).toBe("UnexpectedType");
+    expect(() => d.add("ur:bytes/2-4/lsadaoaxjygonesw")).toThrow(
+      "UR decoder error (decode error: invalid CBOR array length)",
+    );
     expect(d.progress).toBeCloseTo(0.2);
+    const first = new MultipartDecoder();
+    expect(() => first.add("ur:aaa/zz")).toThrow("invalid word");
+    expect(() => first.add(p1of1)).toThrow("expected UR type aaa, but found bytes");
+  });
+  it("validates every string after completion and reports what add adds", () => {
+    const d = new MultipartDecoder();
+    expect(d.add(p1of1)).toBe(true);
+    expect(d.done).toBe(true);
+    expect(d.add(p1of1)).toBe(false);
+    expect(() => d.add("http://x")).toThrow("invalid UR scheme");
+    expect(() => d.add("ur:other/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge")).toThrow(
+      "expected UR type bytes, but found other",
+    );
+    expect(() => d.add("ur:bytes/1-1/zz")).toThrow("invalid word");
+    expect(() => d.add("ur:bytes/lsadaoaxjygonesw")).toThrow(
+      "Can't decode single-part UR as multi-part",
+    );
+    expect(() => d.add("ur:bytes")).toThrow("No type specified");
+    expect(d.done).toBe(true);
+    expect(hex(d.result?.cbor.toData() as Uint8Array)).toBe("4401020304");
+  });
+  it("done follows the fountain decoder; result reassembles and decodes once, and keeps its outcome", () => {
+    const ur = UR.from("bytes", cbor(Uint8Array.from([1, 2, 3, 4])));
+    const e = new MultipartEncoder(ur, 4);
+    const p1 = e.nextPart();
+    const padded = "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm";
+    const d = new MultipartDecoder();
+    expect(d.add(p1)).toBe(true);
+    expect(d.add(padded)).toBe(true);
+    expect(d.done).toBe(true);
+    expect(d.progress).toBe(1);
+    expect(() => d.result).toThrow("UR decoder error (invalid padding)");
+    expect(() => d.result).toThrow("UR decoder error (invalid padding)");
+    expect(d.add(padded)).toBe(false);
+    const bad = new MultipartDecoder();
+    expect(bad.add("ur:bytes/1-1/lpadadadcyzmaeaeaefpzmrddeplhg")).toBe(true);
+    expect(bad.done).toBe(true);
+    expect(code(() => bad.result)).toBe("Cbor");
+    bad.reset();
+    expect(bad.done).toBe(false);
+    expect(bad.result).toBeUndefined();
+  });
+  it("counts a seqNum 0 part towards completion, as the reference's release build does", () => {
+    const d = new MultipartDecoder();
+    expect(d.add("ur:bytes/0-2/lpaeaoahcyztdtdpfefxfyadaovwkightl")).toBe(true);
+    expect(d.done).toBe(false);
+    expect(d.add("ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd")).toBe(true);
+    expect(d.done).toBe(true);
+    expect(() => d.result).toThrow("UR decoder error (expected item)");
+    expect(d.add("ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaaaewswdssiy")).toBe(false);
   });
 });
 
 describe("dcbor bridge errors", () => {
-  it("urFor and decodeURWith throw TagUnnamed for a missing or unnamed first tag (A1)", () => {
+  it("urFor and decodeURWith throw TagUnnamed for a missing or unnamed first tag", () => {
     const untagged = { cborTags: () => [], toCbor: () => cbor(1) };
     expect(code(() => urFor(untagged))).toBe("TagUnnamed");
     expect(() => urFor(untagged)).toThrow("the codec has no tags");
@@ -359,15 +449,20 @@ describe("dcbor bridge", () => {
   it("urFor uses the first tag's name and the tag's content (Rust ur_codable.rs)", () => {
     expect(new Leaf("test").toUR().toString()).toBe("ur:leaf/iejyihjkjygupyltla");
   });
-  it("decodeURWith checks the type then decodes", () => {
+  it("decodeURWith checks the type, as a dcbor Custom error, then decodes", () => {
     const leaf = decodeURWith(UR.parse("ur:leaf/iejyihjkjygupyltla"), Leaf.codec);
     expect(leaf.text).toBe("test");
-    expect(code(() => decodeURWith(UR.parse("ur:test/lsadaoaxjygonesw"), Leaf.codec))).toBe(
-      "UnexpectedType",
-    );
+    try {
+      decodeURWith(UR.parse("ur:test/lsadaoaxjygonesw"), Leaf.codec);
+      throw new Error("expected throw");
+    } catch (e) {
+      expect(e).toBeInstanceOf(CborError);
+      expect((e as CborError).code).toBe("Custom");
+      expect((e as Error).message).toBe("expected UR type leaf, but found test");
+    }
     expect(hex(decodeCbor(encodeCbor(new Leaf("x").toCbor())).toData())).toBe("d8c96178");
   });
-  it("decodeURWith accepts a UR named after any of the codec's tags", () => {
+  it("decodeURWith accepts only a UR named after the codec's first tag, as the reference's from_ur", () => {
     const codec: CborCodec<string> = {
       tags: [LEAF, Tag.from(202, "other")],
       decode: (c) => {
@@ -377,7 +472,13 @@ describe("dcbor bridge", () => {
       encode: (v) => cbor(v),
     };
     expect(decodeURWith(UR.parse("ur:leaf/iejyihjkjygupyltla"), codec)).toBe("201:test");
-    expect(decodeURWith(UR.from("other", cbor("test")), codec)).toBe("202:test");
-    expect(code(() => decodeURWith(UR.from("third", cbor("test")), codec))).toBe("UnexpectedType");
+    for (const type of ["other", "third"]) {
+      expect(() => decodeURWith(UR.from(type, cbor("test")), codec)).toThrow(
+        `expected UR type leaf, but found ${type}`,
+      );
+    }
+    const badName: CborCodec<string> = { ...codec, tags: [Tag.from(201, "Leaf")] };
+    expect(() => decodeURWith(UR.from("leaf", cbor("test")), badName)).toThrow("invalid UR type");
+    expect(code(() => decodeURWith(UR.from("leaf", cbor("test")), badName))).toBe("CborError");
   });
 });

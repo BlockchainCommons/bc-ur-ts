@@ -526,8 +526,10 @@ dependencies = [
  "bc-ur",
  "dcbor",
  "hex",
+ "minicbor",
  "serde",
  "serde_json",
+ "ur",
 ]
 
 [[package]]

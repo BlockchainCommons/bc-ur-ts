@@ -25,7 +25,7 @@ export class MultipartDecoder {
 // @public
 export class MultipartEncoder implements Iterable<string> {
     [Symbol.iterator](): Iterator<string>;
-    constructor(ur: UR, maxFragmentLength: number);
+    constructor(ur: UR, maxFragmentLength: number | bigint);
     get index(): number;
     nextPart(): string;
     get partCount(): number;
@@ -58,12 +58,12 @@ export class UR {
 
 // @public
 export class URError extends Error {
-    static bytewords(message: string, cause?: unknown): URError;
+    static bytewords(message: string): URError;
     static cbor(message: string, cause?: unknown): URError;
     readonly code: URErrorCode;
     static decoder(message: string, cause?: unknown): URError;
     readonly details: URErrorDetails;
-    static invalidParameter(parameter: string, value: number, requirement: string): URError;
+    static invalidParameter(parameter: string, value: unknown, requirement: string): URError;
     static invalidScheme(): URError;
     static invalidType(): URError;
     is(code: URErrorCode): boolean;
@@ -88,7 +88,7 @@ export type URErrorDetails = {
 } | {
     readonly code: "InvalidParameter";
     readonly parameter: string;
-    readonly value: number;
+    readonly value: unknown;
 } | {
     readonly code: "TagUnnamed";
     readonly tag: TagValue | undefined;

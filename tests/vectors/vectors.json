@@ -1,5 +1,5 @@
 {
- "count": 643,
+ "count": 763,
  "vectors": [
   {
    "name": "bwEncode standard len=0",
@@ -1055,7 +1055,7 @@
      "start": 0
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 0"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=0",
@@ -1067,7 +1067,7 @@
      "start": 0
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 0"
   },
   {
    "name": "bwPlain words len=1",
@@ -1115,7 +1115,7 @@
      "start": 3
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 1"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=1",
@@ -1127,7 +1127,7 @@
      "start": 3
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 1"
   },
   {
    "name": "bwPlain words len=2",
@@ -1175,7 +1175,7 @@
      "start": 6
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 2"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=2",
@@ -1187,7 +1187,7 @@
      "start": 6
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 2"
   },
   {
    "name": "bwPlain words len=3",
@@ -1235,7 +1235,7 @@
      "start": 9
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 3"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=3",
@@ -1247,7 +1247,7 @@
      "start": 9
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 3"
   },
   {
    "name": "bwPlain words len=4",
@@ -1355,7 +1355,7 @@
      "start": 15
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 5"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=5",
@@ -1367,7 +1367,7 @@
      "start": 15
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 5"
   },
   {
    "name": "bwPlain words len=10",
@@ -1415,7 +1415,7 @@
      "start": 30
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 10"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=10",
@@ -1427,7 +1427,7 @@
      "start": 30
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 10"
   },
   {
    "name": "bwPlain words len=31",
@@ -1475,7 +1475,7 @@
      "start": 93
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 31"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=31",
@@ -1487,7 +1487,7 @@
      "start": 93
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 31"
   },
   {
    "name": "bwPlain words len=32",
@@ -1535,7 +1535,7 @@
      "start": 96
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 32"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=32",
@@ -1547,7 +1547,7 @@
      "start": 96
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 32"
   },
   {
    "name": "bwPlain words len=33",
@@ -1595,7 +1595,7 @@
      "start": 99
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 33"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=33",
@@ -1607,7 +1607,7 @@
      "start": 99
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 33"
   },
   {
    "name": "bwPlain words len=0",
@@ -1835,7 +1835,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 0"
   },
   {
    "name": "bwPlain identifier len=3",
@@ -1847,7 +1847,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 3"
   },
   {
    "name": "bwPlain identifier len=4",
@@ -1871,7 +1871,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 5"
   },
   {
    "name": "bwPlain identifier len=255",
@@ -1883,7 +1883,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 255"
   },
   {
    "name": "bwPlain identifier len=256",
@@ -1895,7 +1895,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 256"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=0",
@@ -1907,7 +1907,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 0"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=3",
@@ -1919,7 +1919,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 3"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=4",
@@ -1943,7 +1943,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 5"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=255",
@@ -1955,7 +1955,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 255"
   },
   {
    "name": "bwPlain bytemojiIdentifier len=256",
@@ -1967,7 +1967,7 @@
      "start": 240
     }
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|data must be exactly 4 bytes, got 256"
   },
   {
    "name": "bwDecode standard \"acid also apex aqua arch\"",
@@ -1985,7 +1985,7 @@
     "style": "standard",
     "s": "ACID ALSO APEX AQUA ARCH FUEL BALD NAIL WORK"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode uri \"acid-also-apex-aqua-arch\"",
@@ -2003,7 +2003,7 @@
     "style": "uri",
     "s": "acid also apex aqua arch fuel bald nail work"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode standard \"acid-also-apex-aqua-arch\"",
@@ -2012,7 +2012,7 @@
     "style": "standard",
     "s": "acid-also-apex-aqua-arch-fuel-bald-nail-work"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode minimal \"lsadaoaxjygonesw\"",
@@ -2030,7 +2030,7 @@
     "style": "minimal",
     "s": "LSADAOAXJYGONESW"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode minimal \"lsadaoaxjygones\"",
@@ -2039,7 +2039,7 @@
     "style": "minimal",
     "s": "lsadaoaxjygones"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid length)"
   },
   {
    "name": "bwDecode minimal \"lsadaoaxjygonezz\"",
@@ -2048,7 +2048,7 @@
     "style": "minimal",
     "s": "lsadaoaxjygonezz"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode minimal \"lsadaoaxjygoneae\"",
@@ -2057,7 +2057,7 @@
     "style": "minimal",
     "s": "lsadaoaxjygoneae"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid checksum)"
   },
   {
    "name": "bwDecode minimal \"\"",
@@ -2066,7 +2066,7 @@
     "style": "minimal",
     "s": ""
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid checksum)"
   },
   {
    "name": "bwDecode minimal \"ae\"",
@@ -2075,7 +2075,7 @@
     "style": "minimal",
     "s": "ae"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid checksum)"
   },
   {
    "name": "bwDecode minimal \"aeaeaeaeae\"",
@@ -2084,7 +2084,7 @@
     "style": "minimal",
     "s": "aeaeaeaeae"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid checksum)"
   },
   {
    "name": "bwDecode standard \"\"",
@@ -2093,7 +2093,7 @@
     "style": "standard",
     "s": ""
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode standard \"able  acid\"",
@@ -2102,7 +2102,7 @@
     "style": "standard",
     "s": "able  acid"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid word)"
   },
   {
    "name": "bwDecode minimal \"ñeadaoaxjygonesw\"",
@@ -2111,7 +2111,7 @@
     "style": "minimal",
     "s": "ñeadaoaxjygonesw"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (bytewords string contains non-ASCII characters)"
   },
   {
    "name": "bwDecode standard \"able acid also apex aqua\"",
@@ -2120,7 +2120,7 @@
     "style": "standard",
     "s": "able acid also apex aqua"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Bytewords|Bytewords error (invalid checksum)"
   },
   {
    "name": "canon \"able\"",
@@ -2263,6 +2263,62 @@
    "recipe": {
     "k": "canon",
     "token": "zz"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"Kp\"",
+   "recipe": {
+    "k": "canon",
+    "token": "Kp"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"KEEP\"",
+   "recipe": {
+    "k": "canon",
+    "token": "KEEP"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"Kee\"",
+   "recipe": {
+    "k": "canon",
+    "token": "Kee"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"Kep\"",
+   "recipe": {
+    "k": "canon",
+    "token": "Kep"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"İ\"",
+   "recipe": {
+    "k": "canon",
+    "token": "İ"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"kİck\"",
+   "recipe": {
+    "k": "canon",
+    "token": "kİck"
+   },
+   "expect": "undefined"
+  },
+  {
+   "name": "canon \"ſ\"",
+   "recipe": {
+    "k": "canon",
+    "token": "ſ"
    },
    "expect": "undefined"
   },
@@ -4318,7 +4374,7 @@
     "k": "urDecode",
     "s": ""
    },
-   "expect": "throw:InvalidScheme"
+   "expect": "throw:InvalidScheme|invalid UR scheme"
   },
   {
    "name": "urDecode \"ur:\"",
@@ -4326,7 +4382,7 @@
     "k": "urDecode",
     "s": "ur:"
    },
-   "expect": "throw:TypeUnspecified"
+   "expect": "throw:TypeUnspecified|no UR type specified"
   },
   {
    "name": "urDecode \"ur\"",
@@ -4334,7 +4390,7 @@
     "k": "urDecode",
     "s": "ur"
    },
-   "expect": "throw:InvalidScheme"
+   "expect": "throw:InvalidScheme|invalid UR scheme"
   },
   {
    "name": "urDecode \"UR:TEST/LSADAOAXJYGONESW\"",
@@ -4350,7 +4406,7 @@
     "k": "urDecode",
     "s": "ur:test"
    },
-   "expect": "throw:TypeUnspecified"
+   "expect": "throw:TypeUnspecified|no UR type specified"
   },
   {
    "name": "urDecode \"ur:/lsadaoaxjygonesw\"",
@@ -4358,7 +4414,7 @@
     "k": "urDecode",
     "s": "ur:/lsadaoaxjygonesw"
    },
-   "expect": "throw:InvalidType"
+   "expect": "|83010203"
   },
   {
    "name": "urDecode \"ur:Test/lsadaoaxjygonesw\"",
@@ -4374,7 +4430,7 @@
     "k": "urDecode",
     "s": "ur:te_st/lsadaoaxjygonesw"
    },
-   "expect": "throw:InvalidType"
+   "expect": "throw:InvalidType|invalid UR type"
   },
   {
    "name": "urDecode \"ur:test/\"",
@@ -4382,7 +4438,7 @@
     "k": "urDecode",
     "s": "ur:test/"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Decoder|UR decoder error (invalid checksum)"
   },
   {
    "name": "urDecode \"ur:test/lsadaoaxjygonesx\"",
@@ -4390,7 +4446,7 @@
     "k": "urDecode",
     "s": "ur:test/lsadaoaxjygonesx"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Decoder|UR decoder error (invalid word)"
   },
   {
    "name": "urDecode \"ur:test/lsadaoaxjygones\"",
@@ -4398,7 +4454,7 @@
     "k": "urDecode",
     "s": "ur:test/lsadaoaxjygones"
    },
-   "expect": "throw:Bytewords"
+   "expect": "throw:Decoder|UR decoder error (invalid length)"
   },
   {
    "name": "urDecode \"ur:test/1-2/lsadaoaxjygonesw\"",
@@ -4406,7 +4462,7 @@
     "k": "urDecode",
     "s": "ur:test/1-2/lsadaoaxjygonesw"
    },
-   "expect": "throw:NotSinglePart"
+   "expect": "throw:NotSinglePart|UR is not a single-part"
   },
   {
    "name": "urDecode \"ur:test/1-/lsadaoaxjygonesw\"",
@@ -4414,7 +4470,7 @@
     "k": "urDecode",
     "s": "ur:test/1-/lsadaoaxjygonesw"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "urDecode \"ur:test/x-1/lsadaoaxjygonesw\"",
@@ -4422,7 +4478,7 @@
     "k": "urDecode",
     "s": "ur:test/x-1/lsadaoaxjygonesw"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "urDecode \"ur:test/1/lsadaoaxjygonesw\"",
@@ -4430,7 +4486,7 @@
     "k": "urDecode",
     "s": "ur:test/1/lsadaoaxjygonesw"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "urDecode \"ur:test/70000-1/lsadaoaxjygonesw\"",
@@ -4438,7 +4494,7 @@
     "k": "urDecode",
     "s": "ur:test/70000-1/lsadaoaxjygonesw"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "urDecode \"ur:test/1-2/3/lsadaoaxjygonesw\"",
@@ -4446,7 +4502,7 @@
     "k": "urDecode",
     "s": "ur:test/1-2/3/lsadaoaxjygonesw"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "urDecode \"ur:test/+1-2/lsadaoaxjygonesw\"",
@@ -4454,7 +4510,7 @@
     "k": "urDecode",
     "s": "ur:test/+1-2/lsadaoaxjygonesw"
    },
-   "expect": "throw:NotSinglePart"
+   "expect": "throw:NotSinglePart|UR is not a single-part"
   },
   {
    "name": "urDecode \"http://test/lsadaoaxjygonesw\"",
@@ -4462,7 +4518,7 @@
     "k": "urDecode",
     "s": "http://test/lsadaoaxjygonesw"
    },
-   "expect": "throw:InvalidScheme"
+   "expect": "throw:InvalidScheme|invalid UR scheme"
   },
   {
    "name": "urDecode \"ur:test/zmzmaeaeae\"",
@@ -4470,7 +4526,7 @@
     "k": "urDecode",
     "s": "ur:test/zmzmaeaeae"
    },
-   "expect": "throw:Cbor"
+   "expect": "throw:Cbor|CBOR error (unsupported value in CBOR header)"
   },
   {
    "name": "urDecode \"ur:test/lfadfhjetpnb\"",
@@ -4478,7 +4534,7 @@
     "k": "urDecode",
     "s": "ur:test/lfadfhjetpnb"
    },
-   "expect": "throw:Cbor"
+   "expect": "throw:Cbor|CBOR error (early end of CBOR data)"
   },
   {
    "name": "urDecode \"ur:test/csahqdpdkbdt\"",
@@ -4486,7 +4542,7 @@
     "k": "urDecode",
     "s": "ur:test/csahqdpdkbdt"
    },
-   "expect": "throw:Cbor"
+   "expect": "throw:Cbor|CBOR error (a CBOR numeric value was encoded in non-canonical form)"
   },
   {
    "name": "urDecode \"ur:bytes/lsadaoaxjygonesw\"",
@@ -4503,6 +4559,70 @@
     "s": "ur:test/lsadaoaxjygonesw"
    },
    "expect": "test|83010203"
+  },
+  {
+   "name": "urDecode \"ur:test/1-2/zz\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/1-2/zz"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid word)"
+  },
+  {
+   "name": "urDecode \"ur:test/1-2/\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/1-2/"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid checksum)"
+  },
+  {
+   "name": "urDecode \"ur:Test/1-2/zz\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:Test/1-2/zz"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid word)"
+  },
+  {
+   "name": "urDecode \"ur:test/1-x/zz\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/1-x/zz"
+   },
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
+  },
+  {
+   "name": "urDecode \"ur:test/iewsrkrshsqzjllprp\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/iewsrkrshsqzjllprp"
+   },
+   "expect": "test|64efbbbf61"
+  },
+  {
+   "name": "urDecode \"ur:test/idhszmvwynjkem\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/idhszmvwynjkem"
+   },
+   "expect": "throw:Cbor|CBOR error (invalid UTF‑8 string: invalid utf-8 sequence of 1 bytes from index 1)"
+  },
+  {
+   "name": "urDecode \"ur:test/zsgwaeaeadjotbstce\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/zsgwaeaeadjotbstce"
+   },
+   "expect": "test|1a80000100"
+  },
+  {
+   "name": "urDecode \"ur:test/zsgwlaaeaevavewpbk\"",
+   "recipe": {
+    "k": "urDecode",
+    "s": "ur:test/zsgwlaaeaevavewpbk"
+   },
+   "expect": "test|fa4f800000"
   },
   {
    "name": "mpEncode bytes 2B max=10 parts=20",
@@ -5320,7 +5440,7 @@
      "shuffle": 7
     }
    },
-   "expect": "done@4:bytes|581e1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b"
+   "expect": "done@7:bytes|581e1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b"
   },
   {
    "name": "mpDecode bytes 32B max=10 parts=20 shuffle:11 drop=30%",
@@ -5358,7 +5478,7 @@
     },
     "drop": 50
    },
-   "expect": "done@6:bytes|581e1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b"
+   "expect": "incomplete:10"
   },
   {
    "name": "mpDecode bytes 32B max=30 parts=20 forward",
@@ -5654,7 +5774,7 @@
     },
     "order": "reverse"
    },
-   "expect": "done@4:bytes|581f1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d"
+   "expect": "done@6:bytes|581f1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d"
   },
   {
    "name": "mpDecode bytes 33B max=10 parts=20 shuffle:7",
@@ -5710,7 +5830,7 @@
     },
     "drop": 50
    },
-   "expect": "done@4:bytes|581f1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d"
+   "expect": "done@5:bytes|581f1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d"
   },
   {
    "name": "mpDecode bytes 33B max=30 parts=20 forward",
@@ -6502,7 +6622,7 @@
     },
     "drop": 50
    },
-   "expect": "done@11:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+   "expect": "done@12:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
   },
   {
    "name": "mpDecode bytes 259B max=100 parts=20 forward",
@@ -6534,7 +6654,7 @@
     },
     "order": "reverse"
    },
-   "expect": "done@4:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+   "expect": "done@5:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
   },
   {
    "name": "mpDecode bytes 259B max=100 parts=20 shuffle:7",
@@ -6552,7 +6672,7 @@
      "shuffle": 7
     }
    },
-   "expect": "done@5:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+   "expect": "done@6:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
   },
   {
    "name": "mpDecode bytes 259B max=100 parts=20 shuffle:11 drop=30%",
@@ -6590,7 +6710,7 @@
     },
     "drop": 50
    },
-   "expect": "done@4:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
+   "expect": "done@5:bytes|590100000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"
   },
   {
    "name": "mpDecode bytes 259B max=1000 parts=20 forward",
@@ -7502,7 +7622,7 @@
     },
     "order": "reverse"
    },
-   "expect": "done@15:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
+   "expect": "done@16:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
   },
   {
    "name": "mpDecode bytes 1027B max=100 parts=40 shuffle:7",
@@ -7520,7 +7640,7 @@
      "shuffle": 7
     }
    },
-   "expect": "done@21:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
+   "expect": "done@22:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
   },
   {
    "name": "mpDecode bytes 1027B max=100 parts=40 shuffle:11 drop=30%",
@@ -7558,7 +7678,7 @@
     },
     "drop": 50
    },
-   "expect": "done@11:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
+   "expect": "done@17:bytes|590400916ec65cf77cadf55cd7f9cda1a1030026ddd42e905b77adc36e4f2d3ccba44f7f04f2de44f42d84c374a0e149136f25b01852545961d55f7f7a8cde6d0e2ec43f3b2dcb644a2209e8c9e34af5c4747984a5e873c9cf5f965e25ee29039fdf8ca74f1c769fc07eb7ebaec46e0695aea6cbd60b3ec4bbff1b9ffe8a9e7240129377b9d3711ed38d412fbb4442256f1e6f595e0fc57fed451fb0a0101fb76b1fb1e1b88cfdfdaa946294a47de8fff173f021c0e6f65b05c0a494e50791270a0050a73ae69b6725505a2ec8a5791457c9876dd34aadd192a53aa0dc66b556c0c215c7ceb8248b717c22951e65305b56a3706e3e86eb01c803bbf915d80edcd64d4d41977fa6f78dc07eecd072aae5bc8a852397e06034dba6a0b570797c3a89b16673c94838d884923b8186ee2db5c98407cab15e13678d072b43e406ad49477c2e45e85e52ca82a94f6df7bbbe7afbed3a3a830029f29090f25217e48d1f42993a640a67916aa7480177354cc7440215ae41e4d02eae9a191233a6d4922a792c1b7244aa879fefdb4628dc8b0923568869a983b8c661ffab9b2ed2c149e38d41fba090b94155adbed32f8b18142ff0d7de4eeef2b04adf26f2456b46775c6c20b37602df7da179e2332feba8329bbb8d727a138b4ba7a503215eda2ef1e953d89383a382c11d3f2cad37a4ee59a91236a3e56dcf89f6ac81dd4159989c317bd649d9cbc617f73fe10033bd288c60977481a09b343d3f676070e67da757b86de27bfca74392bac2996f7822a7d8f71a489ec6180390089ea80a8fcd6526413ec6c9a339115f111d78ef21d456660aa85f790910ffa2dc58d6a5b93705caef1091474938bd312427021ad1eeafbd19e0d916ddb111fabd8dcab5ad6a6ec3a9c6973809580cb2c164e26686b5b98cfb017a337968c7daaa14ae5152a067277b1b3902677d979f8e39cc2aafb3bc06fcf69160a853e6869dcc09a11b5009f91e6b89e5b927ab1527a735660faa6012b420dd926d940d742be6a64fb01cdc0cff9faa323f02ba41436871a0eab851e7f5782d10fbefde2a7e9ae9dc1e5c2c48f74f6c824ce9ef3c89f68800d44587bedc4ab417cfb3e7447d90e1e417e6e05d30e87239d3a5d1d45993d4461e60a0192831640aa32dedde185a371ded2ae15f8a93dba8809482ce49225daadfbb0fec629e23880789bdf9ed73be57fa84d555134630e8d0f7df48349f29869a477c13ccca9cd555ac42ad7f568416c3d61959d0ed568b2b81c7771e9088ad7fd55fd4386bafbf5a528c30f107139249357368ffa980de2c76ddd9ce4191376be0e6b5170010067e2e75ebe2d2904aeb1f89d5dc98cd4a6f2faaa8be6d03354c990fd895a97feb54668473e9d942bb99e196d897e8f1b01625cf48a7b78d249bb4985c065aa8cd1402ed2ba1b6f908f63dcd84b66425df"
   },
   {
    "name": "mpDecode bytes 48B max=10 parts=60 forward",
@@ -7608,7 +7728,7 @@
      "shuffle": 7
     }
    },
-   "expect": "done@9:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+   "expect": "done@11:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
   },
   {
    "name": "mpDecode bytes 48B max=10 parts=60 shuffle:11 drop=30%",
@@ -7715,7 +7835,7 @@
     },
     "drop": 30
    },
-   "expect": "done@5:crypto-seed|d99d6ca10150101112131415161718191a1b1c1d1e1f"
+   "expect": "done@7:crypto-seed|d99d6ca10150101112131415161718191a1b1c1d1e1f"
   },
   {
    "name": "mpDecode crypto-seed 22B max=5 parts=30 shuffle:23 drop=50%",
@@ -7747,7 +7867,7 @@
     "maxLen": 0,
     "parts": 1
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (expected positive maximum fragment length)"
   },
   {
    "name": "mpEncode bytes 1B max=10 parts=1",
@@ -7773,7 +7893,7 @@
     "maxLen": 10,
     "parts": 1
    },
-   "expect": "throw:InvalidType"
+   "expect": "throw:InvalidType|invalid UR type"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7783,7 +7903,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part)"
   },
   {
    "name": "mpDecode explicit 2 parts",
@@ -7794,7 +7914,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part)"
   },
   {
    "name": "mpDecode explicit 2 parts",
@@ -7805,7 +7925,7 @@
      "ur:test/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7815,7 +7935,7 @@
      "http://x"
     ]
    },
-   "expect": "throw:InvalidScheme"
+   "expect": "throw:InvalidScheme|invalid UR scheme"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7825,7 +7945,7 @@
      "ur:"
     ]
    },
-   "expect": "throw:InvalidType"
+   "expect": "throw:Decoder|UR decoder error (No type specified)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7835,7 +7955,7 @@
      "ur:/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:InvalidType"
+   "expect": "throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7845,7 +7965,7 @@
      "ur:Bad/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:InvalidType|invalid UR type"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7855,7 +7975,7 @@
      "ur:test/1-2/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7865,7 +7985,7 @@
      "ur:test/1-2/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length)"
   },
   {
    "name": "mpDecode explicit 2 parts",
@@ -7876,7 +7996,7 @@
      "ur:test/1-2/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7886,7 +8006,7 @@
      "ur:test/1-x/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7896,7 +8016,7 @@
      "ur:test/abc/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "mpDecode explicit 1 parts",
@@ -7906,7 +8026,27 @@
      "ur:test/1-2/3/lsadaoaxjygonesw"
     ]
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
+  },
+  {
+   "name": "mpDecode explicit 1 parts",
+   "recipe": {
+    "k": "mpDecode",
+    "parts": [
+     "ur:bytes/1-1/lpadadahaefefyadaoaxaaroyncspe"
+    ]
+   },
+   "expect": "done@1:bytes|4401020304"
+  },
+  {
+   "name": "mpDecode explicit 1 parts",
+   "recipe": {
+    "k": "mpDecode",
+    "parts": [
+     "ur:bytes/1-1/lpcsadadahcyztdtdpfefefyadaoaxaavtjetkvo"
+    ]
+   },
+   "expect": "done@1:bytes|4401020304"
   },
   {
    "name": "urEncode  cbor=83010203… (4B)",
@@ -7917,7 +8057,7 @@
      "hex": "83010203"
     }
    },
-   "expect": "throw:InvalidType"
+   "expect": "ur:/lsadaoaxjygonesw|UR:/LSADAOAXJYGONESW"
   },
   {
    "name": "urRoundtrip  cbor=83010203… (4B)",
@@ -7928,7 +8068,7 @@
      "hex": "83010203"
     }
    },
-   "expect": "throw:InvalidType"
+   "expect": "|83010203"
   },
   {
    "name": "mpEncode bytes 21B max=NaN parts=1",
@@ -7941,7 +8081,7 @@
     "maxLen": "NaN",
     "parts": 1
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got NaN"
   },
   {
    "name": "mpEncode bytes 21B max=1.5 parts=1",
@@ -7954,7 +8094,7 @@
     "maxLen": 1.5,
     "parts": 1
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got 1.5"
   },
   {
    "name": "mpEncode bytes 21B max=Infinity parts=1",
@@ -7967,7 +8107,7 @@
     "maxLen": "Infinity",
     "parts": 1
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got Infinity"
   },
   {
    "name": "mpEncode bytes 21B max=-1 parts=1",
@@ -7980,7 +8120,59 @@
     "maxLen": -1,
     "parts": 1
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got -1"
+  },
+  {
+   "name": "mpEncode test 4B max=9007199254740992 parts=1",
+   "recipe": {
+    "k": "mpEncode",
+    "type": "test",
+    "cbor": {
+     "hex": "83010203"
+    },
+    "maxLen": 9007199254740992,
+    "parts": 1
+   },
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got 9007199254740992"
+  },
+  {
+   "name": "mpEncode test 4B max=9007199254740992n parts=1",
+   "recipe": {
+    "k": "mpEncode",
+    "type": "test",
+    "cbor": {
+     "hex": "83010203"
+    },
+    "maxLen": "9007199254740992n",
+    "parts": 1
+   },
+   "expect": "ur:test/1-1/lpadadaacyjygoneswfylsadaoaxlntsdago"
+  },
+  {
+   "name": "mpEncode test 4B max=18446744073709551615n parts=1",
+   "recipe": {
+    "k": "mpEncode",
+    "type": "test",
+    "cbor": {
+     "hex": "83010203"
+    },
+    "maxLen": "18446744073709551615n",
+    "parts": 1
+   },
+   "expect": "ur:test/1-1/lpadadaacyjygoneswfylsadaoaxlntsdago"
+  },
+  {
+   "name": "mpEncode test 4B max=18446744073709551616n parts=1",
+   "recipe": {
+    "k": "mpEncode",
+    "type": "test",
+    "cbor": {
+     "hex": "83010203"
+    },
+    "maxLen": "18446744073709551616n",
+    "parts": 1
+   },
+   "expect": "throw:InvalidParameter|maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got 18446744073709551616n"
   },
   {
    "name": "fountainDecode [1099511627776,1,5,1191942644] u32-field",
@@ -8000,7 +8192,7 @@
     },
     "note": "u32-field"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (1099511627776 overflows target type at position 1: when converting u64 to u32)"
   },
   {
    "name": "fountainDecode [0,1,5,1191942644] seqNum-0",
@@ -8020,7 +8212,7 @@
     },
     "note": "seqNum-0"
    },
-   "expect": "throw:Decoder"
+   "expect": "part:0-1-5-1191942644-0102030405"
   },
   {
    "name": "fountainDecode [1,1,5,1099511627776] u32-checksum",
@@ -8040,7 +8232,7 @@
     },
     "note": "u32-checksum"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (1099511627776 overflows target type at position 4: when converting u64 to u32)"
   },
   {
    "name": "fountainDecode [-1,1,5,1191942644] negative",
@@ -8060,7 +8252,7 @@
     },
     "note": "negative"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (unexpected type i8 at position 1: expected u32)"
   },
   {
    "name": "fountainAdd [0,1,5,1191942644] seqNum-0",
@@ -8082,7 +8274,7 @@
     ],
     "note": "seqNum-0"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:Decoder|UR decoder error (expected item)"
   },
   {
    "name": "fountainAdd [1099511627776,1,5,1191942644] u32-seqNum",
@@ -8104,7 +8296,7 @@
     ],
     "note": "u32-seqNum"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "added=true done=true result=0102030405"
   },
   {
    "name": "fountainAdd [NaN,1,5,1191942644] NaN",
@@ -8126,7 +8318,7 @@
     ],
     "note": "NaN"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|seqNum must be an integer in [0, 9007199254740991], got NaN"
   },
   {
    "name": "fountainAdd [1.5,2,5,1191942644] fraction",
@@ -8148,7 +8340,7 @@
     ],
     "note": "fraction"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|seqNum must be an integer in [0, 9007199254740991], got 1.5"
   },
   {
    "name": "fountainAdd [1,1099511627776,5,1191942644] u32-seqLen",
@@ -8170,7 +8362,7 @@
     ],
     "note": "u32-seqLen"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "added=true done=false result=undefined"
   },
   {
    "name": "fountainAdd [1,1,1099511627776,1191942644] u32-messageLen",
@@ -8192,7 +8384,7 @@
     ],
     "note": "u32-messageLen"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:Decoder|UR decoder error (expected item)"
   },
   {
    "name": "fountainAdd [1,1,5,1099511627776] u32-checksum",
@@ -8214,7 +8406,7 @@
     ],
     "note": "u32-checksum"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|checksum must be an integer in [0, 4294967295], got 1099511627776"
   },
   {
    "name": "fountainAdd [-1,1,5,1191942644] negative",
@@ -8236,7 +8428,7 @@
     ],
     "note": "negative"
    },
-   "expect": "throw:InvalidParameter"
+   "expect": "throw:InvalidParameter|seqNum must be an integer in [0, 9007199254740991], got -1"
   },
   {
    "name": "fountainAdd [1,1,5,1191942644] valid",
@@ -8269,7 +8461,7 @@
     ],
     "note": "u32-field"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (1099511627776 overflows target type at position 1: when converting u64 to u32)"
   },
   {
    "name": "mpDecode explicit 1 parts seqNum-0",
@@ -8280,7 +8472,7 @@
     ],
     "note": "seqNum-0"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (expected item)"
   },
   {
    "name": "mpDecode explicit 2 parts padded",
@@ -8292,7 +8484,7 @@
     ],
     "note": "padded"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (invalid padding)"
   },
   {
    "name": "mpDecode explicit 1 parts header-mismatch",
@@ -8314,7 +8506,7 @@
     ],
     "note": "oversize-header"
    },
-   "expect": "throw:Decoder"
+   "expect": "throw:Decoder|UR decoder error (Invalid indices)"
   },
   {
    "name": "mpDecode explicit 1 parts plus-header",
@@ -8336,7 +8528,1290 @@
     ],
     "note": "upper-case"
    },
-   "expect": "incomplete:1"
+   "expect": "throw:InvalidScheme|invalid UR scheme"
+  },
+  {
+   "name": "mpScan \"ur:bytes/x-y/zz\" +0 malformed-indices-and-payload",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/x-y/zz"
+    ],
+    "note": "malformed-indices-and-payload"
+   },
+   "expect": "throw:Decoder|UR decoder error (Invalid indices),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/65536-1/zz\" +0 oversize-index",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/65536-1/zz"
+    ],
+    "note": "oversize-index"
+   },
+   "expect": "throw:Decoder|UR decoder error (Invalid indices),false,none"
+  },
+  {
+   "name": "mpScan \"ur:test/1-x/zz\" +0 malformed-index",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test/1-x/zz"
+    ],
+    "note": "malformed-index"
+   },
+   "expect": "throw:Decoder|UR decoder error (Invalid indices),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaok\" +1 two-parts",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
+     "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaaaewswdssiy"
+    ],
+    "note": "two-parts"
+   },
+   "expect": "ok,false,none ; ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:/1-1/lpadadahcyztdtdpfefefyadaoaxaabd\" +0 empty-type",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge"
+    ],
+    "note": "empty-type"
+   },
+   "expect": "ok,true,|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-3/lpadaxascytapyvocafxfdadaow\" +5 queue-not-drained",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-3/lpadaxascytapyvocafxfdadaowdprhsbg",
+     "ur:bytes/23-3/lpchaxascytapyvocafxahaxbttehhfdmn",
+     "ur:bytes/4-3/lpaaaxascytapyvocafxgrahatiegynlti",
+     "ur:bytes/1-3/lpadaxascytapyvocafxfdadaowdprhsbg",
+     "ur:bytes/17-3/lpbyaxascytapyvocafxglambkotrywypt",
+     "ur:bytes/3-3/lpaxaxascytapyvocafxamataysgaobyur"
+    ],
+    "note": "queue-not-drained"
+   },
+   "expect": "ok,false,none ; ok,false,none ; ok,false,none ; ok,false,none ; ok,true,bytes|480102030405060708 ; ok,true,bytes|480102030405060708"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahaefefyadaoaxaaroync\" +0 checksum-wrong",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahaefefyadaoaxaaroyncspe"
+    ],
+    "note": "checksum-wrong"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-3/lpadaxascyvagwlsgyfxfdadaoc\" +3 overwrite-derived",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-3/lpadaxascyvagwlsgyfxfdadaoctcwsbjo",
+     "ur:bytes/14-3/lpbaaxascyvagwlsgyfxgrahatkgtkuyte",
+     "ur:bytes/2-3/lpaoaxascyvagwlsgyfxaxzmahaebycpeh",
+     "ur:bytes/3-3/lpaxaxascyvagwlsgyfxamatayfhpyrkry"
+    ],
+    "note": "overwrite-derived"
+   },
+   "expect": "ok,false,none ; ok,false,none ; ok,false,none ; ok,true,bytes|48010203ff05060708"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-2/lpadaoaocyenurytcsfxfpatael\" +1 extra-fragment",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-2/lpadaoaocyenurytcsfxfpataeltlbamut",
+     "ur:bytes/2-2/lpaoaoaocyenurytcsfxaeaeaetoyaonca"
+    ],
+    "note": "extra-fragment"
+   },
+   "expect": "ok,false,none ; ok,true,bytes|4107"
+  },
+  {
+   "name": "fountainScan 4 parts overwrite-derived",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850103091ad9abe21d43480102",
+     "850403091ad9abe21d434b0507",
+     "850203091ad9abe21d4303ff05",
+     "850303091ad9abe21d43060708"
+    ],
+    "note": "overwrite-derived"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,true,48010203ff05060708"
+  },
+  {
+   "name": "fountainScan 3 parts reversed-duplicate",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850c03091ad9abe21d434b0507",
+     "850403091ad9abe21d434b0507",
+     "850103091ad9abe21d43480102"
+    ],
+    "note": "reversed-duplicate"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none"
+  },
+  {
+   "name": "fountainScan 10 parts fuzz1",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850a02021a79770c7a44015fb86a",
+     "850302021a79770c7a4140",
+     "850202021a79770c7a4132",
+     "850006021a79770c7a4140",
+     "850502021a79770c7a4140",
+     "850702021a79770c7a4179",
+     "850a02021a79770c7a4140",
+     "850c02021a79770c7a416d",
+     "850b02021a79770c7a4172",
+     "850202021a79770c7a4158"
+    ],
+    "note": "fuzz1"
+   },
+   "expect": "ok:true,false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none ; throw:Decoder|UR decoder error (part is inconsistent with previous ones),false,none"
+  },
+  {
+   "name": "fountainScan 11 parts fuzz191",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850001011a8707c9a243b70000",
+     "850501011a8707c9a243b70000",
+     "850301011a8707c9a243a02b26",
+     "850401011a8707c9a243dab39b",
+     "850001011a8707c9a243b70000",
+     "850101011a8707c9a243b70000",
+     "850401011a8707c9a243b70000",
+     "850501011a8707c9a243b70000",
+     "850601011a8707c9a243b70000",
+     "850501011a8707c9a243b70000",
+     "850a01011a8707c9a243b70000"
+    ],
+    "note": "fuzz191"
+   },
+   "expect": "ok:true,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 10 parts fuzz385",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850103061a846f084642e38e",
+     "850a03061a846f0846423aa8",
+     "850903061a846f084642ce63",
+     "850103061a846f084642e38e",
+     "850b03061a846f0846426bf4",
+     "850d03061a846f084642ce63",
+     "850503061a846f084642bcd0",
+     "850d03061a846f084642ce63",
+     "850c04061a846f0846422189",
+     "850603061a846f084642965d"
+    ],
+    "note": "fuzz385"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,true,e38e65f63aa8 ; ok:false,true,e38e65f63aa8 ; ok:false,true,e38e65f63aa8 ; ok:false,true,e38e65f63aa8"
+  },
+  {
+   "name": "fountainScan 6 parts fuzz582",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850203031a914f032a41b5",
+     "850203031a914f032a41b5",
+     "850d03031a914f032a4171",
+     "850b03031a914f032a41b5",
+     "850003031a914f032a4154",
+     "850803031a914f032a41b5"
+    ],
+    "note": "fuzz582"
+   },
+   "expect": "ok:true,false,none ; ok:false,false,none ; ok:true,false,none ; ok:false,false,none ; ok:true,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 12 parts fuzz797",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850501091a8196afab427600",
+     "850105091a8196afab42513c",
+     "850805091a8196afab42c30a",
+     "850605091a8196afab42adff",
+     "850105091a8196afab42c30a",
+     "850205091a8196afab42574d",
+     "850205091a8196afab42ea97",
+     "850e05091a8196afab42837d",
+     "850505091a8196afab427600",
+     "850e05091a8196afab422503",
+     "850105091a8196afab42c30a",
+     "850005091a8196afab42c30a"
+    ],
+    "note": "fuzz797"
+   },
+   "expect": "ok:true,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 7 parts fuzz999",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850003091a8f73ecfe43c86f3a",
+     "850d03091a8f73ecfe43584549",
+     "850403091a8f73ecfe43584549",
+     "850503091a8f73ecfe43c86f3a",
+     "850403091a8f73ecfe43584549",
+     "850603091a8f73ecfe4301d530",
+     "850103091a8f73ecfe43c86f3a"
+    ],
+    "note": "fuzz999"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 10 parts fuzz1181",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850603031ae2af40a6413b",
+     "850c03031ae2af40a641aa",
+     "850b03031ae2af40a6416b",
+     "850b03031ae2af40a64106",
+     "850003031ae2af40a6417b",
+     "850103031ae2af40a6417b",
+     "850b03031ae2af40a64106",
+     "850603031ae2af40a6417b",
+     "850a03031ae2af40a641aa",
+     "850703031ae2af40a6417d"
+    ],
+    "note": "fuzz1181"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa ; ok:false,true,3b50aa"
+  },
+  {
+   "name": "fountainScan 2 parts fuzz1378",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850104071ac3bc90974250e7",
+     "850004071ac3bc90974250e7"
+    ],
+    "note": "fuzz1378"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none"
+  },
+  {
+   "name": "fountainScan 11 parts fuzz1577",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "8505050a1a8349e7b342ed5b",
+     "8505050a1a8349e7b342ed5b",
+     "850f050a1a8349e7b342a079",
+     "850f050a1a8349e7b342a079",
+     "8502050a1a8349e7b342a079",
+     "8502050a1a8349e7b342a079",
+     "8507050a1a8349e7b342ed5b",
+     "8507050a1a8349e7b342ed5b",
+     "850b050a1a8349e7b342ed5b",
+     "8500050a1a8349e7b342ffeb",
+     "8501050a1a8349e7b342ffeb"
+    ],
+    "note": "fuzz1577"
+   },
+   "expect": "ok:true,false,none ; ok:false,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,false,none ; ok:true,false,none"
+  },
+  {
+   "name": "fountainScan 7 parts fuzz1742",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "8505050b1a56b1d731421700",
+     "8504050b1a56b1d7314200f2",
+     "8504050b1a56b1d7314200f2",
+     "8500050b1a56b1d731424654",
+     "8503050b1a56b1d7314254ea",
+     "850d050b1a56b1d731421fa7",
+     "8504050b1a56b1d7314200f2"
+    ],
+    "note": "fuzz1742"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:false,false,none"
+  },
+  {
+   "name": "fountainScan 6 parts fuzz1925",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850c04041a59adca284132",
+     "850a04041a59adca2841ee",
+     "850604041a59adca284177",
+     "850704041a59adca284177",
+     "850b04041a59adca284169",
+     "850204041a59adca284160"
+    ],
+    "note": "fuzz1925"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,true,1e60e7ee"
+  },
+  {
+   "name": "fountainScan 12 parts fuzz2130",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850a04081acc3572f642c4eb",
+     "850e04081acc3572f642502f",
+     "850a04081acc3572f642c4eb",
+     "850404081acc3572f6427f2f",
+     "850a04081acc3572f642c4eb",
+     "850e04081acc3572f642502f",
+     "850904081acc3572f64245e4",
+     "850904081acc3572f64245e4",
+     "850104081acc3572f64245e4",
+     "850a04081acc3572f6421b2d",
+     "850704081acc3572f642c4eb",
+     "850a04081acc3572f642c4eb"
+    ],
+    "note": "fuzz2130"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,true,45e4d120502f7f2f ; ok:false,true,45e4d120502f7f2f ; ok:false,true,45e4d120502f7f2f ; ok:false,true,45e4d120502f7f2f ; ok:false,true,45e4d120502f7f2f ; ok:false,true,45e4d120502f7f2f"
+  },
+  {
+   "name": "fountainScan 8 parts fuzz2344",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "8508050f1aa1b04dfe436e6954",
+     "8501050f1aa1b04dfe43e98032",
+     "8506050f1aa1b04dfe43eba874",
+     "850c050f1aa1b04dfe43eba874",
+     "8504050f1aa1b04dfe4387e966",
+     "850d050f1aa1b04dfe43ce71f6",
+     "8507050f1aa1b04dfe43e98032",
+     "850d050f1aa1b04dfe43e74e8a"
+    ],
+    "note": "fuzz2344"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none"
+  },
+  {
+   "name": "fountainScan 9 parts fuzz2554",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850202021a132a940b4103",
+     "850c02001a132a940b41c0",
+     "850002021a132a940b41c0",
+     "850102021a132a940b41c0",
+     "850802021a132a940b41c3",
+     "850102021a132a940b41c0",
+     "850302021a132a940b41c3",
+     "850002021a132a940b41c0",
+     "850502021a132a940b4103"
+    ],
+    "note": "fuzz2554"
+   },
+   "expect": "ok:true,false,none ; throw:Decoder|UR decoder error (expected non-empty part),false,none ; ok:true,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item) ; ok:false,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 7 parts fuzz2751",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850b040b1a5f03cedc43a0e400",
+     "8508040b1a5f03cedc43cd3ee8",
+     "8500040b1a5f03cedc43c70b69",
+     "8505040b1a5f03cedc436ddae8",
+     "850c040b1a5f03cedc43a0e400",
+     "850c040b1a5f03cedc43a0e400",
+     "850d040b1a5f03cedc43aad181"
+    ],
+    "note": "fuzz2751"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "fountainScan 2 parts fuzz2946",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850201011a97f604ea438c0000",
+     "850901011a97f604ea438c0000"
+    ],
+    "note": "fuzz2946"
+   },
+   "expect": "ok:true,true,8c ; ok:false,true,8c"
+  },
+  {
+   "name": "fountainScan 5 parts fuzz3141",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850704071a7d9b12324205a1",
+     "850b04071a7d9b12324205a1",
+     "850a04001a7d9b12324205a1",
+     "850b04001a7d9b12324205a1",
+     "850304071a7d9b1232423644"
+    ],
+    "note": "fuzz3141"
+   },
+   "expect": "ok:true,false,none ; ok:true,false,none ; throw:Decoder|UR decoder error (expected non-empty part),false,none ; throw:Decoder|UR decoder error (expected non-empty part),false,none ; ok:true,false,none"
+  },
+  {
+   "name": "fountainScan 11 parts fuzz3339",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850b02031ac699689442f900",
+     "850602031ac699689442d11e",
+     "850102031ac699689442d11e",
+     "850b02031ac699689442daac",
+     "850702031ac699689442f900",
+     "850c02031ac699689442d11e",
+     "850702031ac699689442f900",
+     "850102031ac699689442d11e",
+     "850b02031ac699689442f900",
+     "850402031ac6996894429408",
+     "850702031ac699689442f900"
+    ],
+    "note": "fuzz3339"
+   },
+   "expect": "ok:true,false,none ; ok:true,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9 ; ok:false,true,d11ef9"
+  },
+  {
+   "name": "fountainScan 14 parts fuzz3541",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850705051a0d497cc04109",
+     "850205051a0d497cc04109",
+     "850205051a0d497cc04109",
+     "850205051a0d497cc04109",
+     "850a05051a0d497cc041fc",
+     "850b05051a0d497cc0411d",
+     "850205051a0d497cc04109",
+     "850d05051a0d497cc04109",
+     "850b05051a0d497cc0411d",
+     "850905051a0d497cc04106",
+     "850905051a0d497cc0411d",
+     "850b05051a0d497cc0411d",
+     "850705051a0d497cc04109",
+     "850b05051a0d497cc0411d"
+    ],
+    "note": "fuzz3541"
+   },
+   "expect": "ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none"
+  },
+  {
+   "name": "fountainScan 8 parts fuzz3761",
+   "recipe": {
+    "k": "fountainScan",
+    "parts": [
+     "850c03031a238d33d14165",
+     "850c03031a238d33d14165",
+     "850c03031a238d33d14165",
+     "850803031a238d33d14115",
+     "850d03031a238d33d14160",
+     "850503031a238d33d1414e",
+     "850803031a238d33d14165",
+     "850d03031a238d33d14160"
+    ],
+    "note": "fuzz3761"
+   },
+   "expect": "ok:true,false,none ; ok:false,false,none ; ok:false,false,none ; ok:false,false,none ; ok:true,false,none ; ok:true,false,none ; ok:false,false,none ; ok:false,false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpcsadadahcyztdtdpfefefyada\" +0 non-minimal-seqNum",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpcsadadahcyztdtdpfefefyadaoaxaavtjetkvo"
+    ],
+    "note": "non-minimal-seqNum"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcwaeaeaeaeztdtdpfef\" +0 non-minimal-checksum",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcwaeaeaeaeztdtdpfefefyadaoaxaasrghehpa"
+    ],
+    "note": "non-minimal-checksum"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/mkahadadahcyztdtdpfefefyada\" +0 non-minimal-array-length",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/mkahadadahcyztdtdpfefefyadaoaxaarlimhyiy"
+    ],
+    "note": "non-minimal-array-length"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcyztdtdpfehdahfyada\" +0 non-minimal-bytes-length",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcyztdtdpfehdahfyadaoaxaagtfejlgd"
+    ],
+    "note": "non-minimal-bytes-length"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoa\" +0 trailing-byte",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoaxaaaefyaebdpt"
+    ],
+    "note": "trailing-byte"
+   },
+   "expect": "ok,true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/neadadahcyztdtdpfefefyadaoa\" +0 indefinite-array",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/neadadahcyztdtdpfefefyadaoaxaazmkgmthnmt"
+    ],
+    "note": "indefinite-array"
+   },
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcyztdtdpfehefefyada\" +0 indefinite-bytes",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcyztdtdpfehefefyadaoaxaazmtnvsiszo"
+    ],
+    "note": "indefinite-bytes"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type indefinite bytes at position 9: expected bytes (definite length)),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lradadahcyztdtdpfebefzjets\" +0 array-of-4",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lradadahcyztdtdpfebefzjets"
+    ],
+    "note": "array-of-4"
+   },
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcyztdtdpfeihfyadaoa\" +0 text-data",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcyztdtdpfeihfyadaoaxaabnvtpeke"
+    ],
+    "note": "text-data"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type string at position 9: expected bytes (definite length)),false,none"
+  },
+  {
+   "name": "mpScan \"UR:BYTES/1-1/LPADADAHCYZTDTDPFEFEFYADAOA\" +0 upper-case",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "UR:BYTES/1-1/LPADADAHCYZTDTDPFEFEFYADAOAXAABDGSPKGE"
+    ],
+    "note": "upper-case"
+   },
+   "expect": "throw:InvalidScheme|invalid UR scheme,false,none"
+  },
+  {
+   "name": "mpScan \"UR:bytes/1-2/lpadaoahcyztdtdpfefxfyadaok\" +0 upper-case-scheme",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "UR:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd"
+    ],
+    "note": "upper-case-scheme"
+   },
+   "expect": "throw:InvalidScheme|invalid UR scheme,false,none"
+  },
+  {
+   "name": "mpScan \"ur:BYTES/1-2/lpadaoahcyztdtdpfefxfyadaok\" +0 upper-case-type",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:BYTES/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd"
+    ],
+    "note": "upper-case-type"
+   },
+   "expect": "throw:InvalidType|invalid UR type,false,none"
+  },
+  {
+   "name": "mpScan \"ur:Bad/lsadaoaxjygonesw\" +0 invalid-type",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:Bad/lsadaoaxjygonesw"
+    ],
+    "note": "invalid-type"
+   },
+   "expect": "throw:InvalidType|invalid UR type,false,none"
+  },
+  {
+   "name": "mpScan \"ur:\" +0 scheme-only",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:"
+    ],
+    "note": "scheme-only"
+   },
+   "expect": "throw:Decoder|UR decoder error (No type specified),false,none"
+  },
+  {
+   "name": "mpScan \"ur:/lsadaoaxjygonesw\" +0 empty-type-single-part",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:/lsadaoaxjygonesw"
+    ],
+    "note": "empty-type-single-part"
+   },
+   "expect": "throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part),false,none"
+  },
+  {
+   "name": "mpScan \"ur:test\" +0 type-only",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test"
+    ],
+    "note": "type-only"
+   },
+   "expect": "throw:Decoder|UR decoder error (No type specified),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/zz\" +0 single-part-bad-bytewords",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/zz"
+    ],
+    "note": "single-part-bad-bytewords"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid word),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/zz\" +0 header-then-bad-bytewords",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/zz"
+    ],
+    "note": "header-then-bad-bytewords"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid word),false,none"
+  },
+  {
+   "name": "mpScan \"ur:test/\" +0 single-part-empty-payload",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test/"
+    ],
+    "note": "single-part-empty-payload"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid checksum),false,none"
+  },
+  {
+   "name": "mpScan \"ur:test/1-2/\" +0 multipart-empty-payload",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test/1-2/"
+    ],
+    "note": "multipart-empty-payload"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid checksum),false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoa\" +5 after-complete",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge",
+     "http://x",
+     "ur:other/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge",
+     "ur:bytes/1-1/zz",
+     "ur:bytes/lsadaoaxjygonesw",
+     "ur:bytes"
+    ],
+    "note": "after-complete"
+   },
+   "expect": "ok,true,bytes|4401020304 ; throw:InvalidScheme|invalid UR scheme,true,bytes|4401020304 ; throw:UnexpectedType|expected UR type bytes, but found other,true,bytes|4401020304 ; throw:Decoder|UR decoder error (invalid word),true,bytes|4401020304 ; throw:Decoder|UR decoder error (Can't decode single-part UR as multi-part),true,bytes|4401020304 ; throw:Decoder|UR decoder error (No type specified),true,bytes|4401020304"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaok\" +3 padding-then-more",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
+     "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm",
+     "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm",
+     "http://x"
+    ],
+    "note": "padding-then-more"
+   },
+   "expect": "ok,false,none ; ok,true,throw:Decoder|UR decoder error (invalid padding) ; ok,true,throw:Decoder|UR decoder error (invalid padding) ; throw:InvalidScheme|invalid UR scheme,true,throw:Decoder|UR decoder error (invalid padding)"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadadcyzmaeaeaefpzmrddep\" +1 bad-cbor-message",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadadcyzmaeaeaefpzmrddeplhg",
+     "ur:bytes/1-1/lpadadadcyzmaeaeaefpzmrddeplhg"
+    ],
+    "note": "bad-cbor-message"
+   },
+   "expect": "ok,true,throw:Cbor|CBOR error (unsupported value in CBOR header) ; ok,true,throw:Cbor|CBOR error (unsupported value in CBOR header)"
+  },
+  {
+   "name": "mpScan \"ur:aaa/zz\" +1 failed-first-part-sets-type",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:aaa/zz",
+     "ur:bytes/1-1/lpadadahcyztdtdpfefefyadaoaxaabdgspkge"
+    ],
+    "note": "failed-first-part-sets-type"
+   },
+   "expect": "throw:Decoder|UR decoder error (invalid word),false,none ; throw:UnexpectedType|expected UR type aaa, but found bytes,false,none"
+  },
+  {
+   "name": "mpScan \"ur:bytes/0-2/lpaeaoahcyztdtdpfefxfyadaov\" +2 seqNum-0-then-good",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/0-2/lpaeaoahcyztdtdpfefxfyadaovwkightl",
+     "ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd",
+     "ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaaaewswdssiy"
+    ],
+    "note": "seqNum-0-then-good"
+   },
+   "expect": "ok,false,none ; ok,true,throw:Decoder|UR decoder error (expected item) ; ok,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "mpScan \"ur:bytes/0-1/lpaeadahcyflbdnlwkfeadaoaxa\" +0 seqNum-0-single",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/0-1/lpaeadahcyflbdnlwkfeadaoaxaaahcntorhdl"
+    ],
+    "note": "seqNum-0-single"
+   },
+   "expect": "ok,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "mpScan \"ur:bytes/1-1/lpadadbkcyztdtdpfefefyadaoa\" +0 len-exceeds",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/1-1/lpadadbkcyztdtdpfefefyadaoaxaakktpecfr"
+    ],
+    "note": "len-exceeds"
+   },
+   "expect": "ok,true,throw:Decoder|UR decoder error (expected item)"
+  },
+  {
+   "name": "mpScan \"ur:test/1-1/lpadadaxcyvwynjkemfxidhszmzo\" +0 invalid-utf8-message",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test/1-1/lpadadaxcyvwynjkemfxidhszmzoztgmdw"
+    ],
+    "note": "invalid-utf8-message"
+   },
+   "expect": "ok,true,throw:Cbor|CBOR error (invalid UTF‑8 string: invalid utf-8 sequence of 1 bytes from index 1)"
+  },
+  {
+   "name": "mpScan \"ur:test/1-1/lpadadahcyqzjllprpfeiewsrkrs\" +0 bom-message",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:test/1-1/lpadadahcyqzjllprpfeiewsrkrshsgwttvlca"
+    ],
+    "note": "bom-message"
+   },
+   "expect": "ok,true,test|64efbbbf61"
+  },
+  {
+   "name": "fountainDecodeHex 850101051a470b99f4450102030405 canonical",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101051a470b99f4450102030405",
+    "note": "canonical"
+   },
+   "expect": "part:850101051a470b99f4450102030405"
+  },
+  {
+   "name": "fountainDecodeHex 850001051a470b99f4450102030405 seqNum-0",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850001051a470b99f4450102030405",
+    "note": "seqNum-0"
+   },
+   "expect": "part:850001051a470b99f4450102030405"
+  },
+  {
+   "name": "fountainDecodeHex 85180101031a0000000043010203 non-minimal-heads",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "85180101031a0000000043010203",
+    "note": "non-minimal-heads"
+   },
+   "expect": "part:850101030043010203"
+  },
+  {
+   "name": "fountainDecodeHex 850101031a0000000043010203ff trailing-byte",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101031a0000000043010203ff",
+    "note": "trailing-byte"
+   },
+   "expect": "part:850101030043010203"
+  },
+  {
+   "name": "fountainDecodeHex 850101051afc292d455f454401020304 indefinite-bytes",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101051afc292d455f454401020304ff",
+    "note": "indefinite-bytes"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type indefinite bytes at position 9: expected bytes (definite length))"
+  },
+  {
+   "name": "fountainDecodeHex 850101051afc292d45654401020304 text-data",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101051afc292d45654401020304",
+    "note": "text-data"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type string at position 9: expected bytes (definite length))"
+  },
+  {
+   "name": "fountainDecodeHex 853805 negative-head-then-end",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "853805",
+    "note": "negative-head-then-end"
+   },
+   "expect": "throw:Decoder|UR decoder error (end of input bytes)"
+  },
+  {
+   "name": "fountainDecodeHex 853805ff negative-head-i16",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "853805ff",
+    "note": "negative-head-i16"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type i16 at position 1: expected u32)"
+  },
+  {
+   "name": "fountainDecodeHex 85380500 negative-head-i8",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "85380500",
+    "note": "negative-head-i8"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type i8 at position 1: expected u32)"
+  },
+  {
+   "name": "fountainDecodeHex 9c array-reserved-info",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "9c",
+    "note": "array-reserved-info"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type 0x1c at position 0: expected u64)"
+  },
+  {
+   "name": "fountainDecodeHex 850101051a000000005c bytes-reserved-info",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101051a000000005c",
+    "note": "bytes-reserved-info"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type 0x1c at position 9: expected u64)"
+  },
+  {
+   "name": "fountainDecodeHex  empty",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "",
+    "note": "empty"
+   },
+   "expect": "throw:Decoder|UR decoder error (end of input bytes)"
+  },
+  {
+   "name": "fountainDecodeHex 85c101 tag-in-u32",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "85c101",
+    "note": "tag-in-u32"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type tag at position 1: expected u32)"
+  },
+  {
+   "name": "fountainDecodeHex 85f90000 f16-in-u32",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "85f90000",
+    "note": "f16-in-u32"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type f16 at position 1: expected u32)"
+  },
+  {
+   "name": "fountainDecodeHex a0 map",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "a0",
+    "note": "map"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type map at position 0: expected array)"
+  },
+  {
+   "name": "fountainDecodeHex 851b0000000100000000 u64-overflow",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "851b0000000100000000",
+    "note": "u64-overflow"
+   },
+   "expect": "throw:Decoder|UR decoder error (4294967296 overflows target type at position 1: when converting u64 to u32)"
+  },
+  {
+   "name": "fountainDecodeHex 9f indefinite-array",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "9f",
+    "note": "indefinite-array"
+   },
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length)"
+  },
+  {
+   "name": "fountainDecodeHex 8401010101 array-of-4",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "8401010101",
+    "note": "array-of-4"
+   },
+   "expect": "throw:Decoder|UR decoder error (decode error: invalid CBOR array length)"
+  },
+  {
+   "name": "fountainDecodeHex 8520 negative-field",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "8520",
+    "note": "negative-field"
+   },
+   "expect": "throw:Decoder|UR decoder error (unexpected type i8 at position 1: expected u32)"
+  },
+  {
+   "name": "fountainDecodeHex 850101031a000000005b002000000000 bytes-length-2^53",
+   "recipe": {
+    "k": "fountainDecodeHex",
+    "hex": "850101031a000000005b0020000000000000",
+    "note": "bytes-length-2^53"
+   },
+   "expect": "throw:Decoder|UR decoder error (end of input bytes)"
+  },
+  {
+   "name": "mpDecodeFrom bytes 48B max=10 from=1",
+   "recipe": {
+    "k": "mpDecodeFrom",
+    "from": {
+     "type": "bytes",
+     "cbor": {
+      "hex": "582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+     },
+     "maxLen": 10,
+     "parts": 60
+    },
+    "skipBefore": 1
+   },
+   "expect": "done@5:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+  },
+  {
+   "name": "mpDecodeFrom bytes 48B max=10 from=51",
+   "recipe": {
+    "k": "mpDecodeFrom",
+    "from": {
+     "type": "bytes",
+     "cbor": {
+      "hex": "582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+     },
+     "maxLen": 10,
+     "parts": 60
+    },
+    "skipBefore": 51
+   },
+   "expect": "done@61:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+  },
+  {
+   "name": "mpDecodeFrom bytes 48B max=10 from=101",
+   "recipe": {
+    "k": "mpDecodeFrom",
+    "from": {
+     "type": "bytes",
+     "cbor": {
+      "hex": "582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+     },
+     "maxLen": 10,
+     "parts": 60
+    },
+    "skipBefore": 101
+   },
+   "expect": "done@110:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+  },
+  {
+   "name": "mpDecodeFrom bytes 48B max=10 from=501",
+   "recipe": {
+    "k": "mpDecodeFrom",
+    "from": {
+     "type": "bytes",
+     "cbor": {
+      "hex": "582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+     },
+     "maxLen": 10,
+     "parts": 60
+    },
+    "skipBefore": 501
+   },
+   "expect": "done@507:bytes|582e546865206f6e6c79207468696e67207765206861766520746f2066656172206973206665617220697473656c662e"
+  },
+  {
+   "name": "urCheckType \"ur:test/lsadaoaxjygonesw\" as \"test\"",
+   "recipe": {
+    "k": "urCheckType",
+    "s": "ur:test/lsadaoaxjygonesw",
+    "type": "test"
+   },
+   "expect": "ok"
+  },
+  {
+   "name": "urCheckType \"ur:test/lsadaoaxjygonesw\" as \"other\"",
+   "recipe": {
+    "k": "urCheckType",
+    "s": "ur:test/lsadaoaxjygonesw",
+    "type": "other"
+   },
+   "expect": "throw:UnexpectedType|expected UR type other, but found test"
+  },
+  {
+   "name": "urCheckType \"ur:test/lsadaoaxjygonesw\" as \"Test\"",
+   "recipe": {
+    "k": "urCheckType",
+    "s": "ur:test/lsadaoaxjygonesw",
+    "type": "Test"
+   },
+   "expect": "throw:InvalidType|invalid UR type"
+  },
+  {
+   "name": "urCheckType \"ur:test/lsadaoaxjygonesw\" as \"\"",
+   "recipe": {
+    "k": "urCheckType",
+    "s": "ur:test/lsadaoaxjygonesw",
+    "type": ""
+   },
+   "expect": "throw:UnexpectedType|expected UR type , but found test"
+  },
+  {
+   "name": "urFor [40300:seed,300:crypto-seed] 83010203",
+   "recipe": {
+    "k": "urFor",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "seed"
+     },
+     {
+      "value": 300,
+      "name": "crypto-seed"
+     }
+    ],
+    "content": {
+     "hex": "83010203"
+    }
+   },
+   "expect": "ur:seed/lsadaoaxjygonesw"
+  },
+  {
+   "name": "urFor [] 83010203",
+   "recipe": {
+    "k": "urFor",
+    "tags": [],
+    "content": {
+     "hex": "83010203"
+    }
+   },
+   "expect": "throw:TagUnnamed|the codec has no tags; a UR type needs a named tag"
+  },
+  {
+   "name": "urFor [999] 83010203",
+   "recipe": {
+    "k": "urFor",
+    "tags": [
+     {
+      "value": 999
+     }
+    ],
+    "content": {
+     "hex": "83010203"
+    }
+   },
+   "expect": "throw:TagUnnamed|CBOR tag 999 must have a name; register the tags first"
+  },
+  {
+   "name": "urFor [40300:Seed] 83010203",
+   "recipe": {
+    "k": "urFor",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "Seed"
+     }
+    ],
+    "content": {
+     "hex": "83010203"
+    }
+   },
+   "expect": "throw:InvalidType|invalid UR type"
+  },
+  {
+   "name": "urFor [40300:] 83010203",
+   "recipe": {
+    "k": "urFor",
+    "tags": [
+     {
+      "value": 40300,
+      "name": ""
+     }
+    ],
+    "content": {
+     "hex": "83010203"
+    }
+   },
+   "expect": "ur:/lsadaoaxjygonesw"
+  },
+  {
+   "name": "decodeURWith [40300:seed,300:crypto-seed] \"ur:seed/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "seed"
+     },
+     {
+      "value": 300,
+      "name": "crypto-seed"
+     }
+    ],
+    "s": "ur:seed/lsadaoaxjygonesw"
+   },
+   "expect": "83010203"
+  },
+  {
+   "name": "decodeURWith [40300:seed,300:crypto-seed] \"ur:crypto-seed/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "seed"
+     },
+     {
+      "value": 300,
+      "name": "crypto-seed"
+     }
+    ],
+    "s": "ur:crypto-seed/lsadaoaxjygonesw"
+   },
+   "expect": "throw:Custom|expected UR type seed, but found crypto-seed"
+  },
+  {
+   "name": "decodeURWith [40300:seed,300:crypto-seed] \"ur:other/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "seed"
+     },
+     {
+      "value": 300,
+      "name": "crypto-seed"
+     }
+    ],
+    "s": "ur:other/lsadaoaxjygonesw"
+   },
+   "expect": "throw:Custom|expected UR type seed, but found other"
+  },
+  {
+   "name": "decodeURWith [40300:Seed] \"ur:seed/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [
+     {
+      "value": 40300,
+      "name": "Seed"
+     }
+    ],
+    "s": "ur:seed/lsadaoaxjygonesw"
+   },
+   "expect": "throw:Custom|invalid UR type"
+  },
+  {
+   "name": "decodeURWith [] \"ur:seed/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [],
+    "s": "ur:seed/lsadaoaxjygonesw"
+   },
+   "expect": "throw:TagUnnamed|the codec has no tags; a UR type needs a named tag"
+  },
+  {
+   "name": "decodeURWith [999] \"ur:seed/lsadaoaxjygonesw\"",
+   "recipe": {
+    "k": "decodeURWith",
+    "tags": [
+     {
+      "value": 999
+     }
+    ],
+    "s": "ur:seed/lsadaoaxjygonesw"
+   },
+   "expect": "throw:TagUnnamed|CBOR tag 999 must have a name; register the tags first"
   }
  ]
 }

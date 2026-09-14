@@ -1,5 +1,61 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`golden: acceptance > MultipartEncoder maxFragmentLength domain 1`] = `
+[
+  "1.5: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got 1.5",
+  "NaN: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got NaN",
+  "0: throw:Decoder:UR decoder error (expected positive maximum fragment length)",
+  "-1: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got -1",
+  "Infinity: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991] or a bigint in [1, 18446744073709551615], got Infinity",
+  "10: 1-3",
+]
+`;
+
+exports[`golden: acceptance > URL header vs CBOR header 1`] = `
+[
+  "header 2-2 on part 1-2: true",
+  "header 70000-70000 agreeing with CBOR: throw:Decoder:UR decoder error (Invalid indices)",
+  "single-part parse of a 70000-1 header: throw:Decoder:UR decoder error (Invalid indices)",
+]
+`;
+
+exports[`golden: acceptance > a part whose padding is not zero 1`] = `
+[
+  "part strings: ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm",
+  "FountainDecoder: throw:Decoder:UR decoder error (invalid padding)",
+  "MultipartDecoder: throw:Decoder:UR decoder error (invalid padding)",
+]
+`;
+
+exports[`golden: acceptance > bridge and identifier argument faults 1`] = `
+[
+  "urFor(unnamed tag): throw:TagUnnamed:CBOR tag 999 must have a name; register the tags first",
+  "decodeURWith(tagless codec): throw:TagUnnamed:the codec has no tags; a UR type needs a named tag",
+  "shortIdentifier(3 bytes): throw:InvalidParameter:data must be exactly 4 bytes, got 3",
+  "partition(data, 0): throw:InvalidParameter:fragmentLength must be an integer in [1, 9007199254740991], got 0",
+]
+`;
+
+exports[`golden: acceptance > fountain part fields 1`] = `
+[
+  "decodeFountainPart seqNum 2^40: throw:Decoder:UR decoder error (1099511627776 overflows target type at position 1: when converting u64 to u32)",
+  "add seqNum 0: throw:Decoder:UR decoder error (expected item)",
+  "add seqNum 2^40: added=true done=true result=0102030405",
+  "add seqNum NaN: throw:InvalidParameter:seqNum must be an integer in [0, 9007199254740991], got NaN",
+  "add seqNum 1.5 of 2: throw:InvalidParameter:seqNum must be an integer in [0, 9007199254740991], got 1.5",
+  "add seqNum 1: added=true done=true result=0102030405",
+]
+`;
+
+exports[`golden: acceptance > the empty UR type 1`] = `
+[
+  "new URType(""): name=""",
+  "UR.from("", [1,2,3]).toString(): ur:/lsadaoaxjygonesw",
+  "UR.parse("ur:/lsadaoaxjygonesw"): type="" cbor=83010203",
+  "MultipartDecoder.add("ur:/lsadaoaxjygonesw"): throw:Decoder:UR decoder error (Can't decode single-part UR as multi-part)",
+]
+`;
+
 exports[`golden: bytewords styles > len 0 1`] = `
 [
   "able able able able",
@@ -84,15 +140,17 @@ exports[`golden: error codes > malformed multipart sequences 1`] = `
   "["ur:test/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:other/lsadaoaxjygonesw","ur:test/lsadaoaxjygonesw"] → throw:Decoder",
   "["http://x"] → throw:InvalidScheme",
-  "["ur:"] → throw:InvalidType",
-  "["ur:/lsadaoaxjygonesw"] → throw:InvalidType",
-  "["ur:Bad/lsadaoaxjygonesw"] → throw:Decoder",
+  "["ur:"] → throw:Decoder",
+  "["ur:/lsadaoaxjygonesw"] → throw:Decoder",
+  "["ur:Bad/lsadaoaxjygonesw"] → throw:InvalidType",
   "["ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/2-2/lsadaoaxjygonesw","ur:test/1-2/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-x/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/abc/lsadaoaxjygonesw"] → throw:Decoder",
   "["ur:test/1-2/3/lsadaoaxjygonesw"] → throw:Decoder",
+  "["ur:bytes/1-1/lpadadahaefefyadaoaxaaroyncspe"] → done@1:bytes|4401020304",
+  "["ur:bytes/1-1/lpcsadadahcyztdtdpfefefyadaoaxaavtjetkvo"] → done@1:bytes|4401020304",
 ]
 `;
 
@@ -103,12 +161,12 @@ exports[`golden: error codes > malformed single-part strings 1`] = `
   ""ur" → throw:InvalidScheme",
   ""UR:TEST/LSADAOAXJYGONESW" → test|83010203",
   ""ur:test" → throw:TypeUnspecified",
-  ""ur:/lsadaoaxjygonesw" → throw:InvalidType",
+  ""ur:/lsadaoaxjygonesw" → |83010203",
   ""ur:Test/lsadaoaxjygonesw" → test|83010203",
   ""ur:te_st/lsadaoaxjygonesw" → throw:InvalidType",
-  ""ur:test/" → throw:Bytewords",
-  ""ur:test/lsadaoaxjygonesx" → throw:Bytewords",
-  ""ur:test/lsadaoaxjygones" → throw:Bytewords",
+  ""ur:test/" → throw:Decoder",
+  ""ur:test/lsadaoaxjygonesx" → throw:Decoder",
+  ""ur:test/lsadaoaxjygones" → throw:Decoder",
   ""ur:test/1-2/lsadaoaxjygonesw" → throw:NotSinglePart",
   ""ur:test/1-/lsadaoaxjygonesw" → throw:Decoder",
   ""ur:test/x-1/lsadaoaxjygonesw" → throw:Decoder",
@@ -122,62 +180,14 @@ exports[`golden: error codes > malformed single-part strings 1`] = `
   ""ur:test/csahqdpdkbdt" → throw:Cbor",
   ""ur:bytes/lsadaoaxjygonesw" → bytes|83010203",
   ""ur:test/lsadaoaxjygonesw" → test|83010203",
-]
-`;
-
-exports[`golden: freeze additions > A1/A3: bridge and identifier argument faults 1`] = `
-[
-  "urFor(unnamed tag): throw:TagUnnamed:CBOR tag 999 must have a name; register the tags first",
-  "decodeURWith(tagless codec): throw:TagUnnamed:the codec has no tags; a UR type needs a named tag",
-  "shortIdentifier(3 bytes): throw:InvalidParameter:data must be exactly 4 bytes, got 3",
-  "partition(data, 0): throw:InvalidParameter:fragmentLength must be an integer in [1, 9007199254740991], got 0",
-]
-`;
-
-exports[`golden: freeze additions > B1: a part whose padding is not zero 1`] = `
-[
-  "part strings: ur:bytes/1-2/lpadaoahcyztdtdpfefxfyadaokbtpcsrd ur:bytes/2-2/lpaoaoahcyztdtdpfefxaxaazmsavsdnwm",
-  "FountainDecoder: throw:Decoder:UR decoder error (invalid padding)",
-  "MultipartDecoder: throw:Decoder:UR decoder error (invalid padding)",
-]
-`;
-
-exports[`golden: freeze additions > B2: the empty UR type 1`] = `
-[
-  "new URType(""): throw:InvalidType:invalid UR type",
-  "UR.from("", [1,2,3]).toString(): throw:InvalidType:invalid UR type",
-  "UR.parse("ur:/lsadaoaxjygonesw"): throw:InvalidType:invalid UR type",
-  "MultipartDecoder.add("ur:/lsadaoaxjygonesw"): throw:InvalidType:invalid UR type",
-]
-`;
-
-exports[`golden: freeze additions > B3: MultipartEncoder maxFragmentLength domain 1`] = `
-[
-  "1.5: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got 1.5",
-  "NaN: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got NaN",
-  "0: throw:Decoder:UR decoder error (expected positive maximum fragment length)",
-  "-1: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got -1",
-  "Infinity: throw:InvalidParameter:maxFragmentLength must be an integer in [1, 9007199254740991], got Infinity",
-  "10: 1-3",
-]
-`;
-
-exports[`golden: freeze additions > B4: fountain part fields 1`] = `
-[
-  "decodeFountainPart seqNum 2^40: throw:Decoder:UR decoder error (Invalid multipart data: seqNum must be in [1, 4294967295], got 1099511627776)",
-  "add seqNum 0: throw:InvalidParameter:seqNum must be an integer in [1, 4294967295], got 0",
-  "add seqNum 2^40: throw:InvalidParameter:seqNum must be an integer in [1, 4294967295], got 1099511627776",
-  "add seqNum NaN: throw:InvalidParameter:seqNum must be an integer in [1, 4294967295], got NaN",
-  "add seqNum 1.5 of 2: throw:InvalidParameter:seqNum must be an integer in [1, 4294967295], got 1.5",
-  "add seqNum 1: added=true done=true result=0102030405",
-]
-`;
-
-exports[`golden: freeze additions > B5: URL header vs CBOR header 1`] = `
-[
-  "header 2-2 on part 1-2: true",
-  "header 70000-70000 agreeing with CBOR: throw:Decoder:UR decoder error (Invalid indices)",
-  "single-part parse of a 70000-1 header: throw:Decoder:UR decoder error (Invalid indices)",
+  ""ur:test/1-2/zz" → throw:Decoder",
+  ""ur:test/1-2/" → throw:Decoder",
+  ""ur:Test/1-2/zz" → throw:Decoder",
+  ""ur:test/1-x/zz" → throw:Decoder",
+  ""ur:test/iewsrkrshsqzjllprp" → test|64efbbbf61",
+  ""ur:test/idhszmvwynjkem" → throw:Cbor",
+  ""ur:test/zsgwaeaeadjotbstce" → test|1a80000100",
+  ""ur:test/zsgwlaaeaevavewpbk" → test|fa4f800000",
 ]
 `;
 
@@ -465,7 +475,7 @@ exports[`golden: multipart > bytes 33B max=10: first parts and completion 1`] = 
 exports[`golden: multipart > bytes 33B max=10: first parts and completion 2`] = `
 [
   "done@4",
-  "done@4",
+  "done@6",
 ]
 `;
 
@@ -906,7 +916,7 @@ exports[`golden: multipart > bytes 259B max=100: first parts and completion 1`] 
 exports[`golden: multipart > bytes 259B max=100: first parts and completion 2`] = `
 [
   "done@3",
-  "done@4",
+  "done@5",
 ]
 `;
 
@@ -1139,7 +1149,7 @@ exports[`golden: multipart > bytes 1027B max=100: first parts and completion 3`]
 exports[`golden: multipart > bytes 1027B max=100: first parts and completion 4`] = `
 [
   "done@11",
-  "done@15",
+  "done@16",
 ]
 `;
 

@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { sha256 } from "@blockchaincommons/crypto";
 import { encodeCbor } from "@blockchaincommons/dcbor";
-import { Xoshiro256 } from "../src/xoshiro";
+import { Xoshiro256, aliasTable } from "../src/xoshiro";
 import {
   FountainEncoder,
   FountainDecoder,
@@ -169,6 +169,36 @@ describe("Xoshiro256.chooseDegree cross-platform fixture", () => {
       expect(rng.chooseDegree(fragments.length)).toBe(expectedDegrees[nonce - 1]);
     }
   });
+});
+
+// -- Weighted::new --------------------------------------------------------
+// Source: `ur-0.4.1/src/sampler.rs`. The alias table for the degree weights
+// 1/1 … 1/n, one line per index (`<index> <f64 bits> <alias>`), hashed with
+// SHA-256. The digests were produced by the reference's `Weighted::new`
+// over the same weights (see tests/rust-validation/README.md).
+
+describe("alias table cross-platform fixture", () => {
+  const digests: Record<number, string> = {
+    3: "1d18ac03b2ad5271611d120cf1503dee6d0208ca50f7f43697bb3d90d8433c9d",
+    11: "1df493f5dea32b39e99da571ccf58d35759042123cfd9a5e8b144a04de3fe709",
+    410: "0f51541f5b5cb1a04d055055380a602adddaf56b6cf9532ee9b0db86c30b655f",
+    1000: "dc593e55fdbfff40e39f4979f383fe2be382ea05bb83614942d9c3b7bc0dfa72",
+    65535: "fb17c899c714ecaa60bdbde59bde1ed835811ec1fd5703695355a4d8eb833b53",
+  };
+  const bits = (p: number): string => {
+    const view = new DataView(new ArrayBuffer(8));
+    view.setFloat64(0, p, false);
+    return view.getBigUint64(0, false).toString(16).padStart(16, "0");
+  };
+  for (const [n, digest] of Object.entries(digests)) {
+    it(`Weighted::new over 1/1 … 1/${n}`, () => {
+      const count = Number(n);
+      const table = aliasTable(Array.from({ length: count }, (_, i) => 1 / (i + 1)));
+      let text = "";
+      for (let i = 0; i < count; i++) text += `${i} ${bits(table.probs[i])} ${table.aliases[i]}\n`;
+      expect(bytesToHex(sha256(utf8.encode(text)))).toBe(digest);
+    });
+  }
 });
 
 // -- test_fragment_length -------------------------------------------------
@@ -422,6 +452,36 @@ describe("FountainDecoder cross-platform behaviour", () => {
     const recovered = decoder.result;
     expect(recovered).not.toBeNull();
     expect(bytesToHex(recovered as Uint8Array)).toBe(bytesToHex(message));
+  });
+
+  it("test_decoder_receive_return_value: true for a new index set, false for a repeat and once complete; an inconsistent part throws", () => {
+    const message = makeMessage("Wolf", 1000);
+    const encoder = new FountainEncoder(message, 10);
+    const decoder = new FountainDecoder();
+    const part = encoder.nextPart();
+    expect(bytesToHex(part.data)).toBe("916ec65cf77cadf55cd7");
+    expect(decoder.add(part)).toBe(true);
+    expect(decoder.add(part)).toBe(false);
+    const next = encoder.nextPart();
+    expect(() => decoder.add({ ...next, checksum: next.checksum + 1 })).toThrow(
+      "part is inconsistent with previous ones",
+    );
+    while (!decoder.done) decoder.add(encoder.nextPart());
+    expect(decoder.add(encoder.nextPart())).toBe(false);
+  });
+
+  it("test_decoder_part_validation: a changed checksum, message length, fragment count or data length is inconsistent", () => {
+    const encoder = new FountainEncoder(utf8.encode("foo"), 2);
+    const part = encoder.nextPart();
+    const decoder = new FountainDecoder();
+    expect(decoder.add(part)).toBe(true);
+    const inconsistent = "part is inconsistent with previous ones";
+    expect(() => decoder.add({ ...part, checksum: part.checksum + 1 })).toThrow(inconsistent);
+    expect(() => decoder.add({ ...part, messageLen: part.messageLen + 1 })).toThrow(inconsistent);
+    expect(() => decoder.add({ ...part, seqLen: part.seqLen + 1 })).toThrow(inconsistent);
+    expect(() => decoder.add({ ...part, data: Uint8Array.from([...part.data, 1]) })).toThrow(
+      inconsistent,
+    );
   });
 
   it("rejects empty parts (Rust EmptyPart)", () => {

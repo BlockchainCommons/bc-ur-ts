@@ -6,6 +6,7 @@
 import {
   type CborCodec,
   type CborTagged,
+  CborError,
   type ToCbor,
   expectTaggedContent,
   taggedValue,
@@ -21,9 +22,12 @@ export interface ToUR {
 
 /**
  * The UR of a tagged dcbor value: the type is the name of its first tag,
- * the payload is the tag's content.
+ * the payload is the tag's content, as the reference's `UREncodable::ur`.
  * @throws {URError} `TagUnnamed` when the value has no tag or its first tag
- * has no registered name.
+ * has no name; `InvalidType` when that name is not a UR type. The
+ * reference panics at the same three points.
+ * @throws {CborError} when `toCbor()` is not tagged with the first tag
+ * (the reference reads `untagged_cbor()` and cannot receive such a value).
  */
 export function urFor(value: ToCbor & CborTagged): UR {
   const tag = value.cborTags()[0];
@@ -33,18 +37,25 @@ export function urFor(value: ToCbor & CborTagged): UR {
 }
 
 /**
- * Decode a UR with a dcbor codec whose first tag names the UR type.
+ * Decode a UR with a dcbor codec whose first tag names the UR type, as the
+ * reference's `URDecodable::from_ur`: the UR's type must be the first tag's
+ * name (a codec's other tags do not name accepted UR types), and the codec
+ * decodes the content wrapped in that tag.
  * @throws {URError} `TagUnnamed` when the codec has no tag or its first tag
- * has no name; `UnexpectedType` when the UR's type is not the codec's.
+ * has no name (the reference panics there).
+ * @throws {CborError} `Custom` when the UR's type is not the first tag's
+ * name ("expected UR type <name>, but found <type>") or that name is not a
+ * UR type ("invalid UR type"), as `from_ur` returns a `dcbor::Error`; and
+ * whatever the codec throws for the content.
  */
 export function decodeURWith<T>(ur: UR, codec: CborCodec<T>): T {
   const first = codec.tags?.[0];
   if (first === undefined) throw URError.tagUnnamed(undefined);
   if (first.name === undefined) throw URError.tagUnnamed(first.value);
-  // A codec that carries several tags (a type with a legacy tag, or one
-  // that dispatches on the tag) accepts a UR named after any of them; the
-  // matching tag wraps the content so the codec sees the tagged form.
-  const tag = codec.tags?.find((t) => t.name === ur.type.name) ?? first;
-  ur.expectType(tag.name ?? first.name);
-  return codec.decode(taggedValue(tag, ur.cbor));
+  try {
+    ur.expectType(first.name);
+  } catch (error) {
+    throw CborError.custom(error instanceof Error ? error.message : String(error));
+  }
+  return codec.decode(taggedValue(first, ur.cbor));
 }

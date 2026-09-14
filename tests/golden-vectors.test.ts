@@ -22,7 +22,7 @@ describe("golden vectors (frozen)", () => {
   });
   vectors.forEach((v, i) => {
     it(`#${i} ${v.name}`, () => {
-      expect(materialize(api, v.recipe)).toBe(v.expect);
+      expect(materialize(api, v.recipe, { messages: true })).toBe(v.expect);
     });
   });
 });

@@ -7,8 +7,9 @@ import type { TagValue } from "@blockchaincommons/dcbor";
 
 /**
  * Machine-readable discriminant for a {@link URError}. Eight codes are the
- * reference's variant names; `InvalidParameter` and `TagUnnamed` are
- * JS-only.
+ * reference's variant names; `InvalidParameter` (an argument the
+ * reference's types could not receive) and `TagUnnamed` (a point where the
+ * reference panics) are JS-only.
  */
 export type URErrorCode =
   | "InvalidScheme"
@@ -40,12 +41,12 @@ export type URErrorDetails =
       readonly found: string;
     }
   | {
-      /** A `number` argument outside its domain (JS-only). */
+      /** An argument outside its domain (JS-only): a wrong type, or a number or bigint outside its width. */
       readonly code: "InvalidParameter";
       /** The argument, e.g. `"maxFragmentLength"`. */
       readonly parameter: string;
-      /** The value received (a length for byte-array arguments). */
-      readonly value: number;
+      /** The value received (the length for `shortIdentifier`'s data, the index for `mixFragments`). */
+      readonly value: unknown;
     }
   | {
       /** A dcbor tag without a registered name cannot name a UR type (JS-only). */
@@ -53,6 +54,24 @@ export type URErrorDetails =
       /** The tag's number; `undefined` when the codec has no tag at all. */
       readonly tag: TagValue | undefined;
     };
+
+/** The received value of an `InvalidParameter`, rendered so that no two values read alike. */
+function render(value: unknown): string {
+  if (typeof value === "bigint") return `${value}n`;
+  if (typeof value === "number") {
+    return Number.isInteger(value) && !Number.isSafeInteger(value)
+      ? BigInt(value).toString()
+      : String(value);
+  }
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "function") return "function";
+  if (Array.isArray(value)) return "Array";
+  if (typeof value === "object" && value !== null) {
+    const name = (value as { constructor?: { name?: unknown } }).constructor?.name;
+    return typeof name === "string" && name !== "" ? name : "object";
+  }
+  return String(value);
+}
 
 /** A result that either holds a value or a {@link URError}. */
 export type URResult<T> =
@@ -72,14 +91,16 @@ export type URResult<T> =
 /**
  * Thrown for malformed UR strings (`InvalidScheme`, `TypeUnspecified`,
  * `InvalidType`, `NotSinglePart`), a type other than the one expected
- * (`UnexpectedType`), bytewords failures (`Bytewords`), CBOR failures
- * (`Cbor`), anything the multipart or fountain decoder rejects
- * (`Decoder`), a `number` argument outside its domain (`InvalidParameter`)
- * and a tag with no name to build a UR type from (`TagUnnamed`). Messages
- * match the Rust reference where a variant exists; branch on `code`.
+ * (`UnexpectedType`), a bytewords failure in `decodeBytewords`
+ * (`Bytewords`), CBOR failures (`Cbor`), anything the reference's `ur`
+ * crate rejects inside a UR string or a part (`Decoder`: bytewords inside a
+ * UR string, the header, the part CBOR, the fountain decoder), an argument
+ * outside its domain (`InvalidParameter`) and a tag with no name to build a
+ * UR type from (`TagUnnamed`). Codes and messages are the reference's
+ * wherever it has an outcome; branch on `code`.
  *
- * Instances come from the static factories only; a wrapped bytewords,
- * CBOR or part error is the `cause`.
+ * Instances come from the static factories only; a wrapped CBOR or part
+ * error is the `cause`.
  *
  * @example
  * ```ts
@@ -124,7 +145,7 @@ export class URError extends Error {
   static typeUnspecified(): URError {
     return new URError("no UR type specified", { code: "TypeUnspecified" });
   }
-  /** The type is empty or uses a character outside `[a-z0-9-]`. */
+  /** The type uses a character outside `[a-z0-9-]`. */
   static invalidType(): URError {
     return new URError("invalid UR type", { code: "InvalidType" });
   }
@@ -140,21 +161,21 @@ export class URError extends Error {
       found,
     });
   }
-  /** A bytewords failure; the bytewords error is the `cause` when one was caught. */
-  static bytewords(message: string, cause?: unknown): URError {
-    return new URError(`Bytewords error (${message})`, { code: "Bytewords" }, cause);
+  /** A `decodeBytewords` failure, in the reference's words. */
+  static bytewords(message: string): URError {
+    return new URError(`Bytewords error (${message})`, { code: "Bytewords" });
   }
   /** A CBOR failure; the dcbor error is the `cause` when one was caught. */
   static cbor(message: string, cause?: unknown): URError {
     return new URError(`CBOR error (${message})`, { code: "Cbor" }, cause);
   }
-  /** Anything the multipart or fountain decoder rejects. */
+  /** Anything the reference's `ur` crate rejects, in its words (its `Error::UR`). */
   static decoder(message: string, cause?: unknown): URError {
     return new URError(`UR decoder error (${message})`, { code: "Decoder" }, cause);
   }
-  /** `parameter` must be `requirement`; `value` is what was received. */
-  static invalidParameter(parameter: string, value: number, requirement: string): URError {
-    return new URError(`${parameter} must be ${requirement}, got ${String(value)}`, {
+  /** `parameter` must be `requirement`; `value` is what was received, rendered exactly. */
+  static invalidParameter(parameter: string, value: unknown, requirement: string): URError {
+    return new URError(`${parameter} must be ${requirement}, got ${render(value)}`, {
       code: "InvalidParameter",
       parameter,
       value,

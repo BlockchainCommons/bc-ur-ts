@@ -25,5 +25,6 @@ coverage
 .env
 .env.*
 
-# Rust cross-validation harness build artifacts
+# Rust cross-validation harness build artifacts and the materialised full corpus
 tests/rust-validation/target
+tests/vectors/full.json

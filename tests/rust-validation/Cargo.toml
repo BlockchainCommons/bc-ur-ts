@@ -5,8 +5,21 @@ edition = "2021"
 publish = false
 
 [dependencies]
+# The reference. bc-ur delegates bytewords, the fountain code and multipart
+# parsing to the `ur` crate, whose parts are decoded with `minicbor`; all
+# three are pinned so the compared behaviour is the released one.
 bc-ur = "=0.19.2"
-dcbor = "0.25"
+ur = "=0.4.1"
+minicbor = { version = "=0.19.1", features = ["alloc"] }
+dcbor = "=0.25.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 hex = "0.4"
+
+# `ur::fountain::choose_fragments` computes `sequence - 1`. For a part whose
+# `seqNum` is 0 that wraps to `usize::MAX` in a release build and panics with
+# overflow checks on. The port follows the wrapping behaviour of the release
+# build that crates.io consumers run, so this stays off (Cargo's release
+# default, pinned on purpose).
+[profile.release]
+overflow-checks = false

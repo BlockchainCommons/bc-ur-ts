@@ -3,13 +3,13 @@
  *
  * @module ur
  */
-import { type Cbor, decodeCbor } from "@blockchaincommons/dcbor";
+import { type Cbor, cborEquals, decodeCbor } from "@blockchaincommons/dcbor";
 import { URError } from "./error.js";
 import { URType } from "./ur-type.js";
-import { encodeBytewords, decodeBytewords } from "./bytewords.js";
-
-/** A header field as the reference's `u16::from_str` reads it: an optional `+`, then digits. */
-const DIGITS = /^\+?\d+$/;
+import { encodeBytewords } from "./bytewords.js";
+import { decodeBytewordsOrReason } from "./bytewords-decode.js";
+import { isMultipartHeader } from "./header.js";
+import { expectBytes, expectString } from "./domain.js";
 
 /**
  * A UR: a {@link URType} and a CBOR payload, spelled
@@ -25,16 +25,20 @@ export class UR {
     this.#cbor = cbor;
   }
 
-  /** A UR of `type` over `cbor`. @throws {URError} `InvalidType` for an empty or malformed type string. */
+  /** A UR of `type` over `cbor`. @throws {URError} `InvalidType` for a malformed type string. */
   static from(type: string | URType, cbor: Cbor): UR {
     return new UR(URType.from(type), cbor);
   }
 
   /**
-   * Parse a single-part UR string (any case).
-   * @throws {URError} `InvalidScheme`, `TypeUnspecified`, `InvalidType`,
-   * `NotSinglePart` (a well-formed multipart header), `Decoder` (a malformed
-   * one), `Bytewords`, `Cbor`, checked in that order.
+   * Parse a single-part UR string (any case: the whole string is
+   * lower-cased first, as the reference's `UR::from_ur_string` does).
+   * @throws {URError} In the reference's order: `InvalidScheme` (no `ur:`),
+   * `TypeUnspecified` (no `/`), `InvalidType`, then `Decoder` for what the
+   * reference's `ur::decode` rejects (a multipart header that is not two
+   * `u16`s, "Invalid indices"; or the payload's bytewords, "invalid word" /
+   * "invalid checksum" / "invalid length" / non-ASCII), `NotSinglePart` for
+   * a well-formed multipart string, and `Cbor`.
    */
   static parse(urString: string): UR {
     const { type, bytes } = UR.decodeBytes(urString);
@@ -47,43 +51,41 @@ export class UR {
     return new UR(type, cbor);
   }
 
-  /** The string for already-encoded CBOR bytes. @throws {URError} `InvalidType` */
+  /** The string for already-encoded CBOR bytes. @throws {URError} `InvalidType`; `InvalidParameter` for a non-`Uint8Array`. */
   static encodeBytes(type: string | URType, cborBytes: Uint8Array): string {
-    return `ur:${URType.from(type).name}/${encodeBytewords(cborBytes, "minimal")}`;
+    const urType = URType.from(type);
+    expectBytes("cborBytes", cborBytes);
+    return `ur:${urType.name}/${encodeBytewords(cborBytes, "minimal")}`;
   }
 
-  /** The type and CBOR bytes of a single-part UR string, without decoding the CBOR. */
+  /**
+   * The type and CBOR bytes of a single-part UR string, without decoding
+   * the CBOR; the checks and their order are those of {@link UR.parse}.
+   */
   static decodeBytes(urString: string): {
     /** The UR type. */
     type: URType;
     /** The CBOR bytes, not yet decoded. */
     bytes: Uint8Array<ArrayBuffer>;
   } {
-    const s = urString.toLowerCase();
+    const s = expectString("urString", urString).toLowerCase();
     if (!s.startsWith("ur:")) throw URError.invalidScheme();
     const body = s.slice(3);
     const slash = body.indexOf("/");
     if (slash === -1) throw URError.typeUnspecified();
     const type = new URType(body.slice(0, slash));
     const payload = body.slice(slash + 1);
-
-    // A second `/` means a multipart header `<seqNum>-<seqLen>`: well-formed
-    // is NotSinglePart, anything else is a decoder error.
+    // The reference's `ur::decode`: everything up to the last slash is a
+    // multipart header, checked before the payload; a bytewords failure
+    // inside a UR string is its `Error::UR`.
     const lastSlash = payload.lastIndexOf("/");
-    if (lastSlash !== -1) {
-      const [seqNum, seqLen, ...rest] = payload.slice(0, lastSlash).split("-");
-      const ok =
-        rest.length === 0 &&
-        seqNum !== undefined &&
-        seqLen !== undefined &&
-        DIGITS.test(seqNum) &&
-        DIGITS.test(seqLen) &&
-        Number(seqNum) <= 0xffff &&
-        Number(seqLen) <= 0xffff;
-      if (!ok) throw URError.decoder("Invalid indices");
-      throw URError.notSinglePart();
+    if (lastSlash !== -1 && !isMultipartHeader(payload.slice(0, lastSlash))) {
+      throw URError.decoder("Invalid indices");
     }
-    return { type, bytes: decodeBytewords(payload, "minimal") };
+    const bytes = decodeBytewordsOrReason(payload.slice(lastSlash + 1), "minimal");
+    if (typeof bytes === "string") throw URError.decoder(bytes);
+    if (lastSlash !== -1) throw URError.notSinglePart();
+    return { type, bytes };
   }
 
   /** The UR type. */
@@ -111,9 +113,10 @@ export class UR {
     return new TextEncoder().encode(this.toQRString());
   }
 
-  /** Whether the UR's type is `type`. */
+  /** Whether the UR's type is `type`. @throws {URError} `InvalidParameter` for anything but a string or `URType`. */
   isType(type: string | URType): boolean {
-    return this.#type.name === (typeof type === "string" ? type : type.name);
+    if (type instanceof URType) return this.#type.equals(type);
+    return this.#type.name === expectString("type", type);
   }
 
   /** Throws unless the UR's type is `type`. @throws {URError} `UnexpectedType` */
@@ -122,13 +125,8 @@ export class UR {
     if (!this.#type.equals(expected)) throw URError.unexpectedType(expected.name, this.#type.name);
   }
 
-  /** Same type and identical CBOR bytes. */
+  /** Same type and structurally equal CBOR, as the reference's `PartialEq` compares them. */
   equals(other: UR): boolean {
-    if (!this.#type.equals(other.#type)) return false;
-    const a = this.#cbor.toData();
-    const b = other.#cbor.toData();
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
+    return this.#type.equals(other.#type) && cborEquals(this.#cbor, other.#cbor);
   }
 }

@@ -1,0 +1,16 @@
+{
+ "count": 1,
+ "vectors": [
+  {
+   "name": "mpScan \"ur:bytes/x-y/zz\" +0 malformed-indices-and-payload",
+   "recipe": {
+    "k": "mpScan",
+    "parts": [
+     "ur:bytes/x-y/zz"
+    ],
+    "note": "malformed-indices-and-payload"
+   },
+   "expect": "throw:Decoder|UR decoder error (Invalid indicez),false,none"
+  }
+ ]
+}
