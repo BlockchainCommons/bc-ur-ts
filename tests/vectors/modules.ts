@@ -1,19 +1,13 @@
 /**
- * Resolves the modules the redesigned adapter needs, with computed
- * specifiers so this typechecks before the `/bytewords` subpath and the
- * canonical dcbor dependency exist.
+ * Resolves the modules the current adapter needs: the package's three
+ * entry points and the dcbor it depends on.
  */
 import * as src from "../../src";
-import { redesignedAdapterFor, type VectorApi } from "./recipes";
+import * as bw from "../../src/bytewords";
+import * as fountain from "../../src/fountain";
+import * as dcbor from "@blockchaincommons/dcbor";
+import { currentAdapterFor, type VectorApi } from "./recipes";
 
-export async function currentApi(): Promise<VectorApi> {
-  let bw: unknown = src;
-  try {
-    bw = await import(["..", "..", "src", "bytewords"].join("/"));
-  } catch {
-    /* pre-redesign */
-  }
-  const dcbor = (await import(["@blockchaincommons", "dcbor"].join("/"))) as unknown;
-  const fountain = (await import(["..", "..", "src", "fountain"].join("/"))) as unknown;
-  return redesignedAdapterFor(src, bw, dcbor, fountain);
+export function currentApi(): Promise<VectorApi> {
+  return Promise.resolve(currentAdapterFor(src, bw, dcbor, fountain));
 }

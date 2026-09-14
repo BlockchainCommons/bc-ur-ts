@@ -120,31 +120,53 @@ export class Xoshiro256 {
   }
 }
 
-/** Walker alias method over non-negative weights; the construction order is wire. */
+/** A Walker alias table: `probs[i]` keeps index `i`, otherwise `aliases[i]` is drawn. */
+export interface AliasTable {
+  readonly probs: number[];
+  readonly aliases: number[];
+}
+
+/**
+ * Builds the alias table exactly as the reference's `Weighted::new` does.
+ * The floating-point operation order is wire: the table decides which
+ * fragments a mixed part carries, so each expression is written in the
+ * reference's association.
+ * @internal
+ */
+export function aliasTable(weights: readonly number[]): AliasTable {
+  const n = weights.length;
+  const sum = weights.reduce((a, b) => a + b, 0);
+  // Reference: `*w *= count as f64 / summed`.
+  const normalized = weights.map((w) => w * (n / sum));
+  const aliases = new Array<number>(n).fill(0);
+  const probs = new Array<number>(n).fill(0);
+  const small: number[] = [];
+  const large: number[] = [];
+  for (let i = n - 1; i >= 0; i--) (normalized[i] < 1 ? small : large).push(i);
+  while (small.length > 0 && large.length > 0) {
+    const a = small.pop();
+    const g = large.pop();
+    if (a === undefined || g === undefined) break;
+    probs[a] = normalized[a];
+    aliases[a] = g;
+    // Reference: `weights[g] += weights[a] - 1.0`.
+    normalized[g] = normalized[g] + (normalized[a] - 1);
+    (normalized[g] < 1 ? small : large).push(g);
+  }
+  for (const g of large) probs[g] = 1;
+  for (const a of small) probs[a] = 1;
+  return { probs, aliases };
+}
+
+/** Walker alias method over non-negative weights. */
 class AliasSampler {
   private readonly aliases: number[];
   private readonly probs: number[];
 
   constructor(weights: readonly number[]) {
-    const n = weights.length;
-    const sum = weights.reduce((a, b) => a + b, 0);
-    const normalized = weights.map((w) => (w * n) / sum);
-    this.aliases = new Array<number>(n).fill(0);
-    this.probs = new Array<number>(n).fill(0);
-    const small: number[] = [];
-    const large: number[] = [];
-    for (let i = n - 1; i >= 0; i--) (normalized[i] < 1 ? small : large).push(i);
-    while (small.length > 0 && large.length > 0) {
-      const a = small.pop();
-      const g = large.pop();
-      if (a === undefined || g === undefined) break;
-      this.probs[a] = normalized[a];
-      this.aliases[a] = g;
-      normalized[g] = normalized[g] + normalized[a] - 1;
-      (normalized[g] < 1 ? small : large).push(g);
-    }
-    for (const g of large) this.probs[g] = 1;
-    for (const a of small) this.probs[a] = 1;
+    const table = aliasTable(weights);
+    this.aliases = table.aliases;
+    this.probs = table.probs;
   }
 
   next(rng: Xoshiro256): number {

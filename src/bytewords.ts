@@ -8,6 +8,11 @@
 import { crc32 } from "@blockchaincommons/crypto";
 import { URError } from "./error.js";
 import { BYTEWORDS, BYTEMOJIS } from "./bytewords-tables.js";
+import { WORD_INDEX, decodeBytewordsOrReason } from "./bytewords-decode.js";
+import { expectBytes, expectChoice, expectString } from "./domain.js";
+
+const BYTEWORDS_STYLES = ["standard", "uri", "minimal"] as const;
+const IDENTIFIER_STYLES = ["standard", "minimal", "bytemoji"] as const;
 
 export { BYTEWORDS, BYTEMOJIS };
 
@@ -24,13 +29,6 @@ export interface IdentifierOptions {
 
 // Precomputed per-byte spellings and reverse lookups.
 const MINIMAL: readonly string[] = BYTEWORDS.map((w) => w[0] + w[3]);
-const WORD_INDEX: ReadonlyMap<string, number> = new Map(BYTEWORDS.map((w, i) => [w, i]));
-// Minimal codes keyed by (first char << 8 | last char); -1 = not a code.
-const MINIMAL_INDEX = new Int16Array(65536).fill(-1);
-for (let i = 0; i < 256; i++) {
-  const w = BYTEWORDS[i];
-  MINIMAL_INDEX[(w.charCodeAt(0) << 8) | w.charCodeAt(3)] = i;
-}
 const BYTEMOJI_SET: ReadonlySet<string> = new Set(BYTEMOJIS);
 const FIRST_LAST: ReadonlyMap<string, string> = new Map(BYTEWORDS.map((w) => [w[0] + w[3], w]));
 const FIRST_THREE: ReadonlyMap<string, string> = new Map(BYTEWORDS.map((w) => [w.slice(0, 3), w]));
@@ -43,8 +41,13 @@ function withChecksum(data: Uint8Array): Uint8Array {
   return out;
 }
 
-/** Encode `data` followed by its CRC-32 (big-endian) in `style` (default minimal). */
+/**
+ * Encode `data` followed by its CRC-32 (big-endian) in `style` (default minimal).
+ * @throws {URError} `InvalidParameter` unless `data` is a `Uint8Array` and `style` one of the three.
+ */
 export function encodeBytewords(data: Uint8Array, style: BytewordsStyle = "minimal"): string {
+  expectBytes("data", data);
+  expectChoice("style", style, BYTEWORDS_STYLES, "minimal");
   const bytes = withChecksum(data);
   if (style === "minimal") {
     let out = "";
@@ -59,57 +62,30 @@ export function encodeBytewords(data: Uint8Array, style: BytewordsStyle = "minim
 /**
  * Decode a lower-case bytewords string in `style`, verifying and stripping
  * the CRC-32. Case-sensitive, as the reference's `bytewords::decode`; the
- * UR parsers lower-case a whole UR string before reaching here.
- * @throws {URError} `Bytewords` for non-ASCII input, an unknown word (an
- * upper-case letter makes one), an odd-length minimal string, or a checksum
- * mismatch.
+ * single-part UR parser lower-cases a whole UR string before reaching here.
+ * @throws {URError} `Bytewords` for non-ASCII input, an odd-length minimal
+ * string, an unknown word (an upper-case letter makes one), or a checksum
+ * mismatch, checked in that order.
  */
 export function decodeBytewords(
   encoded: string,
   style: BytewordsStyle = "minimal",
 ): Uint8Array<ArrayBuffer> {
-  for (let i = 0; i < encoded.length; i++) {
-    if (encoded.charCodeAt(i) > 0x7f)
-      throw URError.bytewords("bytewords string contains non-ASCII characters");
-  }
-  // Case-sensitive, as the reference's `bytewords::decode` (its word tables
-  // are lower-case only). UR parsing lower-cases the whole UR string first,
-  // as `UR::from_ur_string` does; a bare bytewords string is not a UR.
-  const s = encoded;
-  let bytes: Uint8Array;
-  if (style === "minimal") {
-    if (s.length % 2 !== 0) throw URError.bytewords("invalid length");
-    bytes = new Uint8Array(s.length / 2);
-    for (let i = 0; i < s.length; i += 2) {
-      const index = MINIMAL_INDEX[(s.charCodeAt(i) << 8) | s.charCodeAt(i + 1)];
-      if (index < 0) throw URError.bytewords("invalid word");
-      bytes[i / 2] = index;
-    }
-  } else {
-    const words = s.split(style === "standard" ? " " : "-");
-    bytes = new Uint8Array(words.length);
-    for (let i = 0; i < words.length; i++) {
-      const index = WORD_INDEX.get(words[i]);
-      if (index === undefined) throw URError.bytewords("invalid word");
-      bytes[i] = index;
-    }
-  }
-  if (bytes.length < 4) throw URError.bytewords("invalid checksum");
-  const data = bytes.slice(0, -4);
-  const expected = new DataView(bytes.buffer, bytes.byteOffset + bytes.length - 4).getUint32(
-    0,
-    false,
-  );
-  if (crc32(data) !== expected) throw URError.bytewords("invalid checksum");
-  return data;
+  expectString("encoded", encoded);
+  expectChoice("style", style, BYTEWORDS_STYLES, "minimal");
+  const decoded = decodeBytewordsOrReason(encoded, style);
+  if (typeof decoded === "string") throw URError.bytewords(decoded);
+  return decoded;
 }
 
 /**
  * Checksum-free spelling of `data`: space-separated words (`standard`),
  * concatenated two-letter codes (`minimal`), or space-separated bytemojis.
+ * @throws {URError} `InvalidParameter` unless `data` is a `Uint8Array` and the style one of the three.
  */
 export function identifier(data: Uint8Array, options?: IdentifierOptions): string {
-  const style = options?.style ?? "standard";
+  expectBytes("data", data);
+  const style = expectChoice("style", options?.style, IDENTIFIER_STYLES, "standard");
   if (style === "minimal") {
     let out = "";
     for (const b of data) out += MINIMAL[b];
@@ -127,24 +103,34 @@ export function identifier(data: Uint8Array, options?: IdentifierOptions): strin
  * @throws {URError} `InvalidParameter` when `data` is not 4 bytes.
  */
 export function shortIdentifier(data: Uint8Array, options?: IdentifierOptions): string {
+  expectBytes("data", data);
   if (data.length !== 4) {
     throw URError.invalidParameter("data", data.length, "exactly 4 bytes");
   }
   return identifier(data, options);
 }
 
-/** Whether `emoji` is one of the 256 bytemojis. */
+/** Whether `emoji` is one of the 256 bytemojis. @throws {URError} `InvalidParameter` for a non-string. */
 export function isValidBytemoji(emoji: string): boolean {
-  return BYTEMOJI_SET.has(emoji);
+  return BYTEMOJI_SET.has(expectString("emoji", emoji));
 }
 
 /**
  * The full byteword for a token given as a whole word, its first+last
- * letters, or its first or last three letters (any case); `undefined` if it
- * names none.
+ * letters, or its first or last three letters (ASCII letters in any case);
+ * `undefined` if it names none.
+ * @throws {URError} `InvalidParameter` for a non-string.
  */
 export function canonicalizeByteword(token: string): string | undefined {
-  const lower = token.toLowerCase();
+  expectString("token", token);
+  // The reference lower-cases ASCII letters only and looks the token up in
+  // ASCII-keyed tables, so a token with any non-ASCII character names nothing.
+  let lower = "";
+  for (let i = 0; i < token.length; i++) {
+    const c = token.charCodeAt(i);
+    if (c > 0x7f) return undefined;
+    lower += c >= 0x41 && c <= 0x5a ? String.fromCharCode(c + 32) : token[i];
+  }
   switch (lower.length) {
     case 4:
       return WORD_INDEX.has(lower) ? lower : undefined;

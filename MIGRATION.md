@@ -13,11 +13,16 @@
 - [ ] Bytewords moved to the `/bytewords` subpath; `BytewordsStyle.Minimal` → `"minimal"`.
 - [ ] `MultipartDecoder.receive/isComplete/message()` → `add/done/result`;
       `MultipartEncoder.currentIndex()/partsCount()` → `index/partCount`, and it is iterable.
-      Since 1.0.0-beta.2 `add` rejects a single-part UR (`Decoder`, as the reference's
-      `MultipartDecoder` does) — parse those with `UR.parse` — and no longer compares the
-      `n-m/` header with the part's CBOR (the reference reads the fountain fields from the CBOR).
-- [ ] `decodeBytewords` is case-sensitive since 1.0.0-beta.2 (the reference's `bytewords::decode`);
-      `UR.parse` and `MultipartDecoder.add` still lower-case a whole UR string.
+      `add` rejects a single-part UR (`Decoder`, as the reference's `MultipartDecoder` does) —
+      parse those with `UR.parse` — and does not compare the `n-m/` header with the part's
+      CBOR (the reference reads the fountain fields from the CBOR). `add` is case-sensitive
+      (lower-case a QR payload first) and validates every string after completion; `done` is
+      the fountain decoder's completion and `result` reassembles and decodes on first read,
+      throwing `Decoder` or `Cbor`.
+- [ ] `decodeBytewords` is case-sensitive (the reference's `bytewords::decode`);
+      `UR.parse` lower-cases a whole UR string, `MultipartDecoder.add` does not.
+- [ ] `decodeURWith` accepts only a UR named after the codec's first tag and reports a wrong
+      type as a dcbor `CborError` (`Custom`), as the reference's `from_ur` does.
 - [ ] Catch one `URError` and switch on `code`; the nine error classes,
       `Result` and `isError` are gone.
 - [ ] `UREncodable`/`URDecodable`/`URCodable` → `ToUR`, `urFor(value)`, `decodeURWith(ur, codec)`.
@@ -52,7 +57,10 @@
 | `isURTypeChar`, `isValidURType`, `validateURType` | `URType.isValid(s)` and the constructor |
 
 The `Cbor` is canonical `@blockchaincommons/dcbor`. `UR.parse` validates in
-the reference order: scheme, then type, then payload.
+the reference order: scheme, type, the multipart header if there is one
+("Invalid indices"), the payload's bytewords (`Decoder` with the reference's
+reason), `NotSinglePart`, then the CBOR. The empty type is valid, as the
+reference's `URType::new` accepts it.
 
 ## 3. Bytewords (`/bytewords` subpath)
 
@@ -63,9 +71,9 @@ the reference order: scheme, then type, then payload.
 | `encodeToWords(data)` | `identifier(data)` |
 | `encodeToMinimalBytewords(data)` | `identifier(data, { style: "minimal" })` |
 | `encodeToBytemojis(data)` | `identifier(data, { style: "bytemoji" })` |
-| `encodeBytewordsIdentifier(data)` | `shortIdentifier(data)` (4 bytes; `RangeError` otherwise) |
+| `encodeBytewordsIdentifier(data)` | `shortIdentifier(data)` (4 bytes; `InvalidParameter` otherwise) |
 | `encodeBytemojisIdentifier(data)` | `shortIdentifier(data, { style: "bytemoji" })` |
-| `isValidBytemoji`, `canonicalizeByteword`, `BYTEWORDS`, `BYTEMOJIS` | unchanged (tables are `readonly string[]`) |
+| `isValidBytemoji`, `canonicalizeByteword`, `BYTEWORDS`, `BYTEMOJIS` | unchanged; the tables are frozen, and `canonicalizeByteword` lower-cases ASCII letters only |
 | `bytewords.encode/decode/Style/…` namespace | removed; import the subpath |
 | `BYTEWORDS_MAP`, `MINIMAL_BYTEWORDS_MAP` | removed (internal) |
 
@@ -73,13 +81,13 @@ the reference order: scheme, then type, then payload.
 
 | `@bcts/uniform-resources` | `@blockchaincommons/uniform-resources` |
 | --- | --- |
-| `new MultipartEncoder(ur, maxLen)` | unchanged (`RangeError` for `maxLen < 1`) |
+| `new MultipartEncoder(ur, maxLen)` | unchanged; `maxLen` is a safe integer or a `bigint` up to 2⁶⁴ − 1 (0 is `Decoder`, anything else outside that `InvalidParameter`) |
 | `encoder.nextPart()` | unchanged; the encoder is also iterable |
 | `encoder.currentIndex()` | `encoder.index` |
 | `encoder.partsCount()` | `encoder.partCount` |
 | `decoder.receive(part)` | `decoder.add(part)` → `boolean` (made progress) |
 | `decoder.isComplete()` | `decoder.done` |
-| `decoder.message()` → `UR \| null` | `decoder.result` → `UR \| undefined` |
+| `decoder.message()` → `UR \| null` | `decoder.result` → `UR \| undefined` (throws `Decoder` / `Cbor` when the completed message does not reassemble or decode) |
 | — | `decoder.progress`, `decoder.reset()` |
 
 ```diff
@@ -108,14 +116,16 @@ One class, `URError`, with a `code` union:
 | `CBORError` | `"Cbor"` (`cause`) |
 | `URDecodeError`, generic `URError`, bare `Error` from the fountain layer | `"Decoder"` |
 
-| `RangeError` for `maxFragmentLength < 1`, an empty message, a short identifier that is not 4 bytes; `TypeError`/garbage for `NaN` or `1.5` | `"InvalidParameter"` (`details: { parameter, value }`), also for a hand-built `FountainPart` outside `u32` |
+| `RangeError` for `maxFragmentLength < 1`, an empty message, a short identifier that is not 4 bytes; `TypeError`/garbage for `NaN`, `1.5` or a wrong type | `"InvalidParameter"` (`details: { parameter, value }`), for every argument outside its domain, checked before any work |
 | bare `Error` from `urFor` / `decodeURWith` on an unnamed tag | `"TagUnnamed"` (`details: { tag }`) |
+| `UnexpectedTypeError` from `decodableFromUR` | a dcbor `CborError` (`Custom`) from `decodeURWith`, as the reference's `from_ur` |
 
-Messages are unchanged where a reference variant exists (`invalid UR
-scheme`, `expected UR type X, but found Y`, `Bytewords error (invalid
-checksum)`, …). `Result<T>` and `isError` are gone. `details` is a union
-discriminated by `code`; `e.details.code === "UnexpectedType"` narrows to
-`{ expected, found }`. `URResult<T>` is the non-throwing form
+Messages are the reference's `Display` strings (`invalid UR scheme`,
+`expected UR type X, but found Y`, `UR decoder error (invalid checksum)`,
+…); a bytewords failure inside a UR string is `Decoder`, `Bytewords` comes
+only from `decodeBytewords`. `Result<T>` and `isError` are gone. `details`
+is a union discriminated by `code`; `e.details.code === "UnexpectedType"`
+narrows to `{ expected, found }`. `URResult<T>` is the non-throwing form
 (`URType.tryFrom`).
 
 ```ts
@@ -126,12 +136,12 @@ try {
 }
 ```
 
-Four inputs that decoded before are now rejected (see
-[`RUST_DIVERGENCES.md`](./RUST_DIVERGENCES.md)): a multipart message whose
-padding is not zero (`Decoder`, as the reference), a part whose fields are
-not `u32`s or whose `seqNum` is 0 (`Decoder`), a URL header beyond `u16`
-(`Decoder("Invalid indices")`), and the empty UR type (`InvalidType`;
-`ur:/…` was never a valid UR).
+Inputs the decoders treat as the reference does: a multipart message whose
+padding is not zero completes and `result` throws `Decoder`; a part whose
+fields are not `u32`s is `Decoder` with minicbor's text; a URL header beyond
+`u16` is `Decoder("Invalid indices")`; a part with `seqNum` 0 is accepted
+and counted as the reference's wrapped index; an upper-case part is
+`InvalidScheme` or `InvalidType`; the empty UR type is valid.
 
 ## 6. dcbor bridge
 
@@ -144,14 +154,17 @@ not `u32`s or whose `seqNum` is 0 (`Decoder`), a URL header beyond `u16`
 | `decodableFromURString(decodable, s)` | `decodeURWith(UR.parse(s), codec)` |
 | `URDecodable`, `URCodable`, `isUREncodable`, `isURDecodable`, `isURCodable` | removed |
 
-## 7. Node and TypeScript floors
+## 7. Decoding follows the reference's `ur` crate
 
-Node **22.12** and TypeScript **5.7**. The IIFE / global-script build is
-gone; use the ESM or CJS entry.
-
-## 8. What did not change
-
-- Every UR string, QR string, bytewords string and multipart part string.
-- Decoder acceptance: the same parts complete the same messages (see
-  `RUST_DIVERGENCES.md` for where that is more than the Rust reference).
-- Error messages.
+- Completion: a mixed part is reduced against the fragments known when it
+  arrives, and a buffered part only when a later simple part comes, so a
+  shuffled or lossy sequence can need more parts than before; the parts a
+  message needs when they arrive in order are unchanged.
+- The reassembled message is returned without a CRC-32 check against the
+  parts' checksum field; each part's bytewords checksum is still verified.
+- Part CBOR is read as `minicbor` reads it (any head width, trailing bytes
+  ignored), with minicbor's error texts.
+- `MultipartDecoder.add` is case-sensitive and validates every string, also
+  after completion.
+- Every UR string, QR string, bytewords string and multipart part string is
+  unchanged.

@@ -3,8 +3,8 @@
  *
  *   bun scripts/annotate-isolated-declarations.ts [--dry-run]
  *
- * The reference tsconfig enables `isolatedDeclarations`, which the monorepo did
- * not. It requires an explicit type on any exported declaration whose type a
+ * The reference tsconfig enables `isolatedDeclarations`, which the source this
+ * package was ported from did not. It requires an explicit type on any exported declaration whose type a
  * single-file emit cannot infer. Most of those are one shape:
  *
  *   export const FOO = new Bar(...)        ->  export const FOO: Bar = new Bar(...)

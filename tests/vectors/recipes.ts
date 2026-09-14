@@ -2,17 +2,23 @@
  * Vector recipes. A recipe names an operation and its inputs; `materialize`
  * runs it through a `VectorApi` and returns one outcome string, so the same
  * recipe drives the golden file, the differential and the Rust harness.
- * Adapters bridge the pre- and post-redesign surfaces.
+ * Adapters bridge the frozen baseline's surface and the current one.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type Bytes = { hex: string } | { cycle: number; start?: number } | { text: string };
 /**
- * A JavaScript `number` that must survive JSON: `NaN` and the infinities
- * have no JSON form, so they travel as strings.
+ * A JavaScript number or bigint that must survive JSON: `NaN` and the
+ * infinities have no JSON form, so they travel as strings; a `bigint`
+ * travels as its decimal digits followed by `n`, which the Rust harness
+ * parses exactly (a JSON number is compared only up to 2^53 - 1).
  */
-export type Num = number | "NaN" | "Infinity" | "-Infinity";
-export const num = (v: Num): number => (typeof v === "number" ? v : Number(v));
+export type Num = number | "NaN" | "Infinity" | "-Infinity" | `${bigint}n`;
+export const num = (v: Num): number | bigint => {
+  if (typeof v === "number") return v;
+  if (v.endsWith("n")) return BigInt(v.slice(0, -1));
+  return Number(v);
+};
 export type Style = "standard" | "uri" | "minimal";
 export type PlainFn = "words" | "bytemojis" | "minimal" | "identifier" | "bytemojiIdentifier";
 export interface MultipartSpec {
@@ -25,6 +31,11 @@ export interface MultipartSpec {
 export interface PartFields {
   fields: [Num, Num, Num, Num];
   data: Bytes;
+}
+/** A dcbor tag for the codable recipes: a number and an optional name. */
+export interface TagSpec {
+  value: number;
+  name?: string;
 }
 export type Order = "forward" | "reverse" | { shuffle: number };
 export type Recipe =
@@ -42,14 +53,44 @@ export type Recipe =
   /** `decodeFountainPart` over the CBOR of `[…fields, data]`. */
   | { k: "fountainDecode"; part: PartFields; note?: string }
   /** Hand-built parts fed to `FountainDecoder.add` in order. */
-  | { k: "fountainAdd"; parts: PartFields[]; note?: string };
+  | { k: "fountainAdd"; parts: PartFields[]; note?: string }
+  /** Part strings fed to a `MultipartDecoder` one by one, recording every step. */
+  | { k: "mpScan"; parts: string[]; note?: string }
+  /** Part CBOR (hex) decoded and fed to a `FountainDecoder` one by one, recording every step. */
+  | { k: "fountainScan"; parts: string[]; note?: string }
+  /** `decodeFountainPart` over raw CBOR bytes, re-encoded. */
+  | { k: "fountainDecodeHex"; hex: string; note?: string }
+  /** Parts from `from`, fed from part `skipBefore` on, until the decoder completes. */
+  | { k: "mpDecodeFrom"; from: MultipartSpec; skipBefore: number }
+  /** `UR.parse(s).expectType(type)`. */
+  | { k: "urCheckType"; s: string; type: string }
+  /** `urFor` over a value whose tags are `tags` and whose content is `content`. */
+  | { k: "urFor"; tags: TagSpec[]; content: Bytes }
+  /** `decodeURWith(UR.parse(s), codec)` for a codec tagged `tags`. */
+  | { k: "decodeURWith"; tags: TagSpec[]; s: string };
 export type Outcome = string;
+
+/** Kinds whose outcomes always carry the error message next to the code. */
+const MESSAGE_KINDS: ReadonlySet<Recipe["k"]> = new Set<Recipe["k"]>([
+  "mpScan",
+  "fountainScan",
+  "fountainDecodeHex",
+  "mpDecodeFrom",
+  "urCheckType",
+  "urFor",
+  "decodeURWith",
+]);
 
 export interface DecoderLike {
   receive(part: string): void;
   done(): boolean;
   /** `[type, cborBytes]` once done. */
   result(): [string, Uint8Array] | undefined;
+}
+export interface FountainDecoderLike {
+  add(part: unknown): boolean;
+  done(): boolean;
+  result(): Uint8Array | undefined;
 }
 export interface VectorApi {
   bwEncode(data: Uint8Array, style: Style): string;
@@ -60,14 +101,25 @@ export interface VectorApi {
   urEncode(type: string, cbor: Uint8Array): [string, string];
   /** `[type, cborBytes]`. */
   urDecode(s: string): [string, Uint8Array];
-  mpEncode(type: string, cbor: Uint8Array, maxLen: number, count: number): string[];
+  mpEncode(type: string, cbor: Uint8Array, maxLen: number | bigint, count: number): string[];
   mpDecoder(): DecoderLike;
   /** `part:<seqNum>-<seqLen>-<messageLen>-<checksum>-<hex data>`. */
-  fountainDecode(fields: number[], data: Uint8Array): string;
+  fountainDecode(fields: (number | bigint)[], data: Uint8Array): string;
   /** `added=<bools> done=<bool> result=<hex|undefined>`. */
-  fountainAdd(parts: { fields: number[]; data: Uint8Array }[]): string;
+  fountainAdd(parts: { fields: (number | bigint)[]; data: Uint8Array }[]): string;
+  /** A part decoded from its CBOR bytes, opaque to the recipes. */
+  fountainPart(bytes: Uint8Array): unknown;
+  fountainDecoder(): FountainDecoderLike;
+  /** Hex of `encodeFountainPart(decodeFountainPart(bytes))`. */
+  fountainDecodeHex(bytes: Uint8Array): string;
+  urCheckType(s: string, type: string): void;
+  urFor(tags: TagSpec[], content: Uint8Array): string;
+  /** Hex of the decoded content. */
+  decodeURWith(tags: TagSpec[], s: string): string;
   /** The error's code, or its class name for a non-package error. */
   errorCode(e: unknown): string;
+  /** `<code>|<message>`. */
+  errorText(e: unknown): string;
 }
 
 export function toBytes(b: Bytes): Uint8Array {
@@ -102,6 +154,10 @@ export function orderParts(parts: string[], order: Order, drop = 0): string[] {
   return drop > 0 ? out.filter(() => (rnd.next().value as number) % 100 >= drop) : out;
 }
 
+const tagsName = (tags: TagSpec[]): string =>
+  `[${tags.map((t) => (t.name === undefined ? String(t.value) : `${t.value}:${t.name}`)).join(",")}]`;
+const noted = (note: string | undefined): string => (note === undefined ? "" : ` ${note}`);
+
 export function recipeName(r: Recipe): string {
   switch (r.k) {
     case "bwEncode":
@@ -121,19 +177,41 @@ export function recipeName(r: Recipe): string {
     case "mpEncode":
       return `mpEncode ${r.type} ${toBytes(r.cbor).length}B max=${r.maxLen} parts=${r.parts}`;
     case "fountainDecode":
-      return `fountainDecode [${r.part.fields.join(",")}]${r.note ? ` ${r.note}` : ""}`;
+      return `fountainDecode [${r.part.fields.join(",")}]${noted(r.note)}`;
     case "fountainAdd":
-      return `fountainAdd ${r.parts.map((p) => `[${p.fields.join(",")}]`).join(" ")}${r.note ? ` ${r.note}` : ""}`;
+      return `fountainAdd ${r.parts.map((p) => `[${p.fields.join(",")}]`).join(" ")}${noted(r.note)}`;
     case "mpDecode":
-      if ("parts" in r)
-        return `mpDecode explicit ${r.parts.length} parts${r.note ? ` ${r.note}` : ""}`;
+      if ("parts" in r) return `mpDecode explicit ${r.parts.length} parts${noted(r.note)}`;
       return `mpDecode ${r.from.type} ${toBytes(r.from.cbor).length}B max=${r.from.maxLen} parts=${r.from.parts} ${
         typeof r.order === "string" ? r.order : `shuffle:${r.order.shuffle}`
       }${r.drop ? ` drop=${r.drop}%` : ""}`;
+    case "mpScan":
+      return `mpScan ${JSON.stringify(r.parts[0]?.slice(0, 40) ?? "")} +${Math.max(0, r.parts.length - 1)}${noted(r.note)}`;
+    case "fountainScan":
+      return `fountainScan ${r.parts.length} parts${noted(r.note)}`;
+    case "fountainDecodeHex":
+      return `fountainDecodeHex ${r.hex.slice(0, 32)}${noted(r.note)}`;
+    case "mpDecodeFrom":
+      return `mpDecodeFrom ${r.from.type} ${toBytes(r.from.cbor).length}B max=${r.from.maxLen} from=${r.skipBefore}`;
+    case "urCheckType":
+      return `urCheckType ${JSON.stringify(r.s.slice(0, 32))} as ${JSON.stringify(r.type)}`;
+    case "urFor":
+      return `urFor ${tagsName(r.tags)} ${hex(toBytes(r.content)).slice(0, 16)}`;
+    case "decodeURWith":
+      return `decodeURWith ${tagsName(r.tags)} ${JSON.stringify(r.s.slice(0, 32))}`;
   }
 }
 
-export function materialize(api: VectorApi, r: Recipe): Outcome {
+/** Options for `materialize`. */
+export interface MaterializeOptions {
+  /** Render thrown errors as `throw:<code>|<message>` for every kind; the default keeps `throw:<code>` for the kinds the frozen baseline can run. */
+  readonly messages?: boolean;
+}
+
+export function materialize(api: VectorApi, r: Recipe, opts: MaterializeOptions = {}): Outcome {
+  const withMessages = opts.messages === true || MESSAGE_KINDS.has(r.k);
+  const fail = (e: unknown): string =>
+    withMessages ? `throw:${api.errorText(e)}` : `throw:${api.errorCode(e)}`;
   try {
     switch (r.k) {
       case "bwEncode":
@@ -185,9 +263,84 @@ export function materialize(api: VectorApi, r: Recipe): Outcome {
         }
         return `incomplete:${n}`;
       }
+      case "mpScan": {
+        const d = api.mpDecoder();
+        const steps: string[] = [];
+        for (const p of r.parts) {
+          let recv: string;
+          try {
+            d.receive(p);
+            recv = "ok";
+          } catch (e) {
+            recv = fail(e);
+          }
+          const complete = d.done();
+          let message: string;
+          try {
+            const m = d.result();
+            message = m === undefined ? "none" : `${m[0]}|${hex(m[1])}`;
+          } catch (e) {
+            message = fail(e);
+          }
+          steps.push(`${recv},${complete},${message}`);
+        }
+        return steps.join(" ; ");
+      }
+      case "fountainScan": {
+        const d = api.fountainDecoder();
+        const steps: string[] = [];
+        for (const h of r.parts) {
+          let part: unknown;
+          try {
+            part = api.fountainPart(toBytes({ hex: h }));
+          } catch (e) {
+            steps.push(`decode-${fail(e)}`);
+            continue;
+          }
+          let recv: string;
+          try {
+            recv = `ok:${d.add(part)}`;
+          } catch (e) {
+            recv = fail(e);
+          }
+          const complete = d.done();
+          let message: string;
+          try {
+            const m = d.result();
+            message = m === undefined ? "none" : hex(m);
+          } catch (e) {
+            message = fail(e);
+          }
+          steps.push(`${recv},${complete},${message}`);
+        }
+        return steps.join(" ; ");
+      }
+      case "fountainDecodeHex":
+        return `part:${api.fountainDecodeHex(toBytes({ hex: r.hex }))}`;
+      case "mpDecodeFrom": {
+        const parts = api.mpEncode(r.from.type, toBytes(r.from.cbor), num(r.from.maxLen), 1000);
+        const d = api.mpDecoder();
+        let index = 0;
+        for (const p of parts) {
+          index++;
+          if (index >= r.skipBefore) d.receive(p);
+          if (d.done()) {
+            const [t, c] = d.result() as [string, Uint8Array];
+            return `done@${index}:${t}|${hex(c)}`;
+          }
+        }
+        return `incomplete:${index}`;
+      }
+      case "urCheckType":
+        api.urCheckType(r.s, r.type);
+        return "ok";
+      case "urFor":
+        return api.urFor(r.tags, toBytes(r.content));
+      case "decodeURWith":
+        return api.decodeURWith(r.tags, r.s);
     }
   } catch (e) {
-    return `throw:${api.errorCode(e)}`;
+    return fail(e);
   }
 }
 
@@ -202,19 +355,30 @@ const BASELINE_CODES: Record<string, string> = {
   URDecodeError: "Decoder",
   // The baseline leaks bare `Error`s from the fountain layer and throws the
   // generic `URError` for malformed multipart data; the Rust reference wraps
-  // all of these as `Error::UR(..)` ("UR decoder error"), which is the
-  // redesign's `Decoder` code.
+  // all of these as `Error::UR(..)` ("UR decoder error"), the current
+  // `Decoder` code.
   URError: "Decoder",
   Error: "Decoder",
 };
 
-/** Recipe kinds the frozen baseline bundle cannot run (it exposes no fountain API). */
+/** Recipe kinds the frozen baseline bundle cannot run (it exposes no fountain API and no step-by-step decoder). */
 export const BASELINE_UNSUPPORTED: ReadonlySet<Recipe["k"]> = new Set<Recipe["k"]>([
   "fountainDecode",
   "fountainAdd",
+  "mpScan",
+  "fountainScan",
+  "fountainDecodeHex",
+  "mpDecodeFrom",
+  "urCheckType",
+  "urFor",
+  "decodeURWith",
 ]);
 
-/** Pre-redesign surface (compat dcbor, `BytewordsStyle` enum, class-per-error). */
+const unsupported = (): never => {
+  throw new Error("baseline: unsupported recipe kind");
+};
+
+/** The frozen baseline's surface (compat dcbor, `BytewordsStyle` enum, class-per-error). */
 export function baselineAdapterFor(m: any): VectorApi {
   const plain: Record<PlainFn, (d: Uint8Array) => string> = {
     words: m.encodeToWords,
@@ -231,6 +395,7 @@ export function baselineAdapterFor(m: any): VectorApi {
     return [s, s.toUpperCase()];
   };
   const urOf = (type: string, cbor: Uint8Array) => m.UR.fromURString(urEncode(type, cbor)[0]);
+  const errorCode = (e: unknown): string => BASELINE_CODES[(e as Error).name] ?? (e as Error).name;
   return {
     bwEncode: (d, style) => m.encodeBytewords(d, style),
     bwDecode: (s, style) => m.decodeBytewords(s, style),
@@ -256,24 +421,26 @@ export function baselineAdapterFor(m: any): VectorApi {
         },
       };
     },
-    fountainDecode: () => {
-      throw new Error("baseline: no fountain API");
-    },
-    fountainAdd: () => {
-      throw new Error("baseline: no fountain API");
-    },
-    errorCode: (e) => BASELINE_CODES[(e as Error).name] ?? (e as Error).name,
+    fountainDecode: unsupported,
+    fountainAdd: unsupported,
+    fountainPart: unsupported,
+    fountainDecoder: unsupported,
+    fountainDecodeHex: unsupported,
+    urCheckType: unsupported,
+    urFor: unsupported,
+    decodeURWith: unsupported,
+    errorCode,
+    errorText: (e) => `${errorCode(e)}|${(e as Error).message}`,
   };
 }
 
 /**
- * Redesigned surface: `UR.from/parse`, `type`/`cbor` getters, `toString`,
- * `/bytewords` subpath, `MultipartDecoder.add/done/result`, one `URError`
- * with `code`. Falls back to the baseline shape while it is still current.
+ * The current surface: `UR.from/parse`, `type`/`cbor` getters, `toString`,
+ * the `/bytewords` and `/fountain` subpaths, `MultipartDecoder.add/done/result`,
+ * one `URError` with `code`.
  */
-export function redesignedAdapterFor(m: any, bw: any, dcbor: any, fn: any = undefined): VectorApi {
-  if (m.BytewordsStyle !== undefined) return baselineAdapterFor(m);
-  const partOf = (fields: number[], data: Uint8Array) => ({
+export function currentAdapterFor(m: any, bw: any, dcbor: any, fn: any): VectorApi {
+  const partOf = (fields: (number | bigint)[], data: Uint8Array) => ({
     seqNum: fields[0],
     seqLen: fields[1],
     messageLen: fields[2],
@@ -288,6 +455,9 @@ export function redesignedAdapterFor(m: any, bw: any, dcbor: any, fn: any = unde
     bytemojiIdentifier: (d) => bw.shortIdentifier(d, { style: "bytemoji" }),
   };
   const urOf = (type: string, cbor: Uint8Array) => m.UR.from(type, dcbor.decodeCbor(cbor));
+  const tagsOf = (tags: TagSpec[]): any[] => tags.map((t) => dcbor.Tag.from(t.value, t.name));
+  const errorCode = (e: unknown): string =>
+    m.URError.isURError(e) ? (e as { code: string }).code : (e as Error).name;
   return {
     bwEncode: (d, style) => bw.encodeBytewords(d, style),
     bwDecode: (s, style) => bw.decodeBytewords(s, style),
@@ -312,8 +482,10 @@ export function redesignedAdapterFor(m: any, bw: any, dcbor: any, fn: any = unde
           d.add(p);
         },
         done: () => d.done,
-        result: () =>
-          d.result === undefined ? undefined : [d.result.type.name, d.result.cbor.toData()],
+        result: () => {
+          const ur = d.result;
+          return ur === undefined ? undefined : [ur.type.name, ur.cbor.toData()];
+        },
       };
     },
     fountainDecode: (fields, data) => {
@@ -326,6 +498,43 @@ export function redesignedAdapterFor(m: any, bw: any, dcbor: any, fn: any = unde
       const result = d.result;
       return `added=${added.join(",")} done=${d.done} result=${result === undefined ? "undefined" : hex(result)}`;
     },
-    errorCode: (e) => (m.URError.isURError(e) ? (e as { code: string }).code : (e as Error).name),
+    fountainPart: (bytes) => fn.decodeFountainPart(bytes),
+    fountainDecoder: () => {
+      const d = new fn.FountainDecoder();
+      return { add: (p) => d.add(p), done: () => d.done, result: () => d.result };
+    },
+    fountainDecodeHex: (bytes) => hex(fn.encodeFountainPart(fn.decodeFountainPart(bytes))),
+    urCheckType: (s, type) => {
+      m.UR.parse(s).expectType(type);
+    },
+    urFor: (tags, content) => {
+      const t = tagsOf(tags);
+      const value = {
+        cborTags: () => t,
+        toCbor: () =>
+          t.length > 0
+            ? dcbor.taggedValue(t[0], dcbor.decodeCbor(content))
+            : dcbor.decodeCbor(content),
+      };
+      return m.urFor(value).toString();
+    },
+    decodeURWith: (tags, s) => {
+      const t = tagsOf(tags);
+      const codec = {
+        tags: t,
+        decode: (c: any) => hex(dcbor.expectTaggedContent(c, t[0].value).toData()),
+        encode: (v: any) => v,
+      };
+      return m.decodeURWith(m.UR.parse(s), codec);
+    },
+    errorCode,
+    errorText: (e) => {
+      const err = e as { name?: unknown; code?: unknown; message?: unknown };
+      const code =
+        m.URError.isURError(e) || (err.name === "CborError" && typeof err.code === "string")
+          ? String(err.code)
+          : String(err.name ?? "Error");
+      return `${code}|${String(err.message ?? e)}`;
+    },
   };
 }

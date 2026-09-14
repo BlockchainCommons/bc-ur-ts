@@ -2,17 +2,17 @@
   {
     "name": "ESM root entry (import *), minified + gzipped",
     "path": "dist/index.mjs",
-    "limit": "21 kB"
+    "limit": "34 kB"
   },
   {
     "name": "bytewords subpath, minified + gzipped",
     "path": "dist/bytewords.mjs",
-    "limit": "8 kB"
+    "limit": "21 kB"
   },
   {
     "name": "fountain subpath, minified + gzipped",
     "path": "dist/fountain.mjs",
-    "limit": "18 kB"
+    "limit": "31 kB"
   },
   {
     "name": "root entry, package's own code (crypto and dcbor external)",

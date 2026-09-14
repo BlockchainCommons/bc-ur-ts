@@ -44,10 +44,13 @@ for (const part of encoder) {
 }
 decoder.result?.equals(ur); // true
 
-// A scanner that may see either kind dispatches on the `n-m/` header, as a
-// caller of the reference does: `MultipartDecoder` rejects a single-part UR.
-const isMultipart = (s: string) => /^ur:[^/]+\/\+?\d+-\+?\d+\//i.test(s);
-isMultipart("ur:test/lsadaoaxjygonesw"); // false → UR.parse(s)
+// A scanner that may see either kind lower-cases the payload (the multipart
+// decoder is case-sensitive, as the reference's) and dispatches on the
+// `n-m/` header, as a caller of the reference does: `MultipartDecoder`
+// rejects a single-part UR.
+const scanned = "UR:TEST/LSADAOAXJYGONESW".toLowerCase();
+const isMultipart = (s: string) => /^ur:[^/]*\/\+?\d+-\+?\d+\//.test(s);
+isMultipart(scanned); // false → UR.parse(scanned)
 
 // Bytewords.
 encodeBytewords(new Uint8Array([1, 2, 3, 4, 5]), "standard"); // "acid also apex aqua arch fuel bald nail work"
@@ -55,15 +58,17 @@ encodeBytewords(new Uint8Array([1, 2, 3, 4, 5]), "standard"); // "acid also apex
 try {
   UR.parse("ur:test/lsadaoaxjygonese");
 } catch (e) {
-  if (URError.isURError(e)) console.log(e.code); // "Bytewords"
+  if (URError.isURError(e)) console.log(e.code, e.message); // "Decoder", "UR decoder error (invalid checksum)"
 }
 
-// Every failure is a URError; branch with `is`, and read `details` by code.
+// Failures are URErrors with the reference's codes and messages; an
+// argument outside its domain is `InvalidParameter`. Branch with `is`, and
+// read `details` by code.
 try {
   new MultipartEncoder(ur, 1.5);
 } catch (e) {
   if (URError.isURError(e) && e.is("InvalidParameter")) {
-    console.log(e.details.parameter, e.message); // "maxFragmentLength", "… must be an integer in [1, …], got 1.5"
+    console.log(e.details.parameter, e.message); // "maxFragmentLength", "… must be an integer in [1, …] or a bigint in [1, …], got 1.5"
   }
 }
 
@@ -80,13 +85,13 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Version History
 
+- **1.0.0-beta.3 (September 14, 2026)** - Decoding follows the reference's `ur` crate in full: fountain completion, no CRC-32 check on reassembly, `seqNum` 0, minicbor part CBOR and messages, a case-sensitive `MultipartDecoder` that validates after completion, `UR.parse` in the reference order with `Decoder` for bytewords failures, the empty UR type, `decodeURWith` on the first tag only with a dcbor `CborError` for a wrong type, ASCII-only `canonicalizeByteword`, frozen tables, argument validation on every export, and a `bigint` `maxFragmentLength`.
 - **1.0.0-beta.2 (September 12, 2026)** - Decoding follows the reference: `bytewords` decoding is case-sensitive, `MultipartDecoder` rejects single-part URs and reads the fountain fields from the CBOR (the header is parsed as two `u16`s, a leading `+` allowed), and a zero `maxFragmentLength` reports the reference's decoder error.
 - **1.0.0-beta.1 (September 9, 2026)** - Initial beta implementation.
 
 ### Roadmap
 
 - Continued testing and auditing on the path from beta to a stable **1.0.0** release.
-- Continued parity with the Rust reference implementation as it evolves (see [`RUST_DIVERGENCES.md`](./RUST_DIVERGENCES.md)).
 
 ### Dependencies
 

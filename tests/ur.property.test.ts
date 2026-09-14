@@ -81,10 +81,10 @@ describe("ur properties", () => {
       { numRuns: 80 },
     );
   });
-  it("URType accepts exactly one or more of [a-z0-9-]", () => {
+  it("URType accepts exactly the strings of [a-z0-9-], the empty one included", () => {
     fc.assert(
       fc.property(fc.string({ maxLength: 8 }), (s) => {
-        const valid = /^[a-z0-9-]+$/.test(s);
+        const valid = /^[a-z0-9-]*$/.test(s);
         let ok = true;
         try {
           new src.URType(s);
@@ -164,9 +164,67 @@ describe("ur properties", () => {
       ),
     );
   });
-  it('URType rejects ""', () => {
-    expect(src.URType.isValid("")).toBe(false);
-    expect(src.URType.tryFrom("").ok).toBe(false);
-    expect(() => new src.URType("")).toThrow("invalid UR type");
+  it("any argument value yields a result or a URError, never another exception", () => {
+    const ur = src.UR.from("bytes", cbor(cborBstr(new Uint8Array(10))));
+    const msg = new Uint8Array(10);
+    const calls: ((v: never) => unknown)[] = [
+      (v) => bw.encodeBytewords(v),
+      (v) => bw.encodeBytewords(msg, v),
+      (v) => bw.decodeBytewords(v),
+      (v) => bw.identifier(v),
+      (v) => bw.identifier(msg, { style: v }),
+      (v) => bw.shortIdentifier(v),
+      (v) => bw.isValidBytemoji(v),
+      (v) => bw.canonicalizeByteword(v),
+      (v) => new src.URType(v),
+      (v) => src.URType.isValid(v),
+      (v) => src.URType.from(v),
+      (v) => src.UR.parse(v),
+      (v) => src.UR.decodeBytes(v),
+      (v) => src.UR.encodeBytes("test", v),
+      (v) => src.UR.encodeBytes(v, msg),
+      (v) => ur.isType(v),
+      (v) => ur.expectType(v),
+      (v) => new src.MultipartDecoder().add(v),
+      (v) => new src.MultipartEncoder(ur, v),
+      (v) => new fountain.FountainEncoder(v, 10),
+      (v) => new fountain.FountainEncoder(msg, v),
+      (v) => new fountain.FountainDecoder().add(v),
+      (v) => fountain.encodeFountainPart(v),
+      (v) => fountain.decodeFountainPart(v),
+      (v) => fountain.fragmentLength(v, 10),
+      (v) => fountain.fragmentLength(10, v),
+      (v) => fountain.partition(v, 3),
+      // A fragment length the host cannot allocate fails as the reference's
+      // allocation does; that limit is the host's, not an argument fault.
+      (v) => (typeof v === "number" && v > 2 ** 24 ? undefined : fountain.partition(msg, v)),
+      (v) => fountain.splitMessage(v, 3),
+      (v) => fountain.splitMessage(msg, v),
+      (v) => fountain.chooseFragments(v, 3, 7),
+      (v) => fountain.chooseFragments(5, v, 7),
+      (v) => fountain.chooseFragments(5, 3, v),
+      (v) => fountain.mixFragments(v, [0]),
+      (v) => fountain.mixFragments([msg], v),
+      (v) => fountain.xorInto(v, msg),
+      (v) => fountain.xorInto(msg, v),
+    ];
+    fc.assert(
+      fc.property(fc.anything(), (v) =>
+        calls.every((call) => {
+          try {
+            call(v as never);
+            return true;
+          } catch (e) {
+            return src.URError.isURError(e);
+          }
+        }),
+      ),
+      { numRuns: 300 },
+    );
+  });
+  it('URType accepts ""', () => {
+    expect(src.URType.isValid("")).toBe(true);
+    expect(src.URType.tryFrom("").ok).toBe(true);
+    expect(new src.URType("").name).toBe("");
   });
 });

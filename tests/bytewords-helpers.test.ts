@@ -4,6 +4,8 @@
 import {
   BYTEWORDS,
   BYTEMOJIS,
+  encodeBytewords,
+  decodeBytewords,
   identifier,
   shortIdentifier,
   isValidBytemoji,
@@ -66,7 +68,53 @@ describe("isValidBytemoji", () => {
   });
 });
 
+describe("argument validation", () => {
+  it("checks byte, string and style arguments before any work", () => {
+    expect(() => encodeBytewords(bytes(1), "foo" as never)).toThrow(
+      'style must be one of "standard", "uri", "minimal", got "foo"',
+    );
+    expect(() => identifier(bytes(1), { style: "foo" as never })).toThrow(
+      'style must be one of "standard", "minimal", "bytemoji", got "foo"',
+    );
+    expect(() => encodeBytewords("abc" as never)).toThrow('data must be a Uint8Array, got "abc"');
+    expect(() => decodeBytewords(5 as never)).toThrow("encoded must be a string, got 5");
+    expect(() => isValidBytemoji(1 as never)).toThrow("emoji must be a string, got 1");
+    expect(() => canonicalizeByteword(null as never)).toThrow("token must be a string, got null");
+    expect(() => shortIdentifier([1, 2, 3, 4] as never)).toThrow(
+      "data must be a Uint8Array, got Array",
+    );
+    expect(identifier(Buffer.from([0, 1]))).toBe("able acid");
+  });
+});
+
+describe("tables", () => {
+  it("are frozen, so a caller cannot change the wire spelling", () => {
+    expect(Object.isFrozen(BYTEWORDS)).toBe(true);
+    expect(Object.isFrozen(BYTEMOJIS)).toBe(true);
+    expect(() => {
+      (BYTEWORDS as string[])[0] = "zzzz";
+    }).toThrow(TypeError);
+    expect(identifier(bytes(0))).toBe("able");
+  });
+});
+
 describe("canonicalizeByteword", () => {
+  it("lower-cases ASCII letters only; a non-ASCII token names nothing (the reference's to_ascii_lowercase)", () => {
+    // U+212A KELVIN SIGN lower-cases to "k" under Unicode rules, not ASCII ones.
+    for (const token of [
+      "\u212Ap",
+      "\u212AEEP",
+      "\u212Aee",
+      "\u212Aep",
+      "\u0130",
+      "k\u0130ck",
+      "\u017F",
+    ]) {
+      expect(canonicalizeByteword(token)).toBeUndefined();
+    }
+    expect(canonicalizeByteword("Kp")).toBe("keep");
+    expect(canonicalizeByteword("KEEP")).toBe("keep");
+  });
   it("full words, any case", () => {
     expect(canonicalizeByteword("able")).toBe("able");
     expect(canonicalizeByteword("ABLE")).toBe("able");

@@ -2,26 +2,33 @@
  * The Luby-transform fountain code behind multipart URs: a message is cut
  * into equal fragments, each part XORs a pseudo-random subset of them
  * (chosen from a xoshiro stream seeded by the part number and the message
- * checksum), and a decoder recovers the fragments by peeling.
+ * checksum), and a decoder recovers the fragments as the reference's
+ * `ur::fountain::Decoder` does.
  *
  * @module @blockchaincommons/uniform-resources/fountain
  */
 import { crc32 } from "@blockchaincommons/crypto";
+import { encodeCbor } from "@blockchaincommons/dcbor";
 import {
-  encodeCbor,
-  decodeCbor,
-  expectArray,
+  NON_NEGATIVE,
+  POSITIVE,
+  U32,
   expectBytes,
-  expectUnsigned,
-} from "@blockchaincommons/dcbor";
-import { POSITIVE, U32, U32_POSITIVE, expectInt, isIntIn } from "./domain.js";
+  expectInt,
+  expectRecord,
+  expectUsize,
+  isBytes,
+  isIntIn,
+} from "./domain.js";
 import { URError } from "./error.js";
+import { PartCborError, PartReader } from "./part-cbor.js";
 import { Xoshiro256, seedFor } from "./xoshiro.js";
 
 /**
  * One part of a fountain-coded message; the CBOR array
- * `[seqNum, seqLen, messageLen, checksum, data]` on the wire. The four
- * integers are `u32`s and `seqNum` is at least 1.
+ * `[seqNum, seqLen, messageLen, checksum, data]` on the wire. `seqNum`,
+ * `seqLen` and `messageLen` are the reference's `usize` counters (safe
+ * integers here, `u32` on the wire) and `checksum` is a `u32`.
  */
 export interface FountainPart {
   /** 1-based part number; parts `1..seqLen` are the plain fragments. */
@@ -36,26 +43,36 @@ export interface FountainPart {
   readonly data: Uint8Array;
 }
 
-// `parameter` must be a u32 (and, for `seqNum`, ≥ 1); an argument fault.
-function expectPartFields(part: FountainPart): void {
-  expectInt("seqNum", part.seqNum, U32_POSITIVE);
-  expectInt("seqLen", part.seqLen, U32);
-  expectInt("messageLen", part.messageLen, U32);
-  expectInt("checksum", part.checksum, U32);
+// The reference's field types, an argument fault outside them; each field is read once.
+function expectPart(part: FountainPart): FountainPart {
+  const record = expectRecord("part", part);
+  return {
+    seqNum: expectInt("seqNum", record["seqNum"], NON_NEGATIVE),
+    seqLen: expectInt("seqLen", record["seqLen"], NON_NEGATIVE),
+    messageLen: expectInt("messageLen", record["messageLen"], NON_NEGATIVE),
+    checksum: expectInt("checksum", record["checksum"], U32),
+    data: expectBytes("data", record["data"]),
+  };
 }
 
 const divCeil = (a: number, b: number): number => Math.floor(a / b) + (a % b > 0 ? 1 : 0);
 
-/** The fragment length that cuts `dataLength` into the fewest fragments of at most `maxFragmentLength`, evenly. */
+/**
+ * The fragment length that cuts `dataLength` into the fewest fragments of at most `maxFragmentLength`, evenly.
+ * @throws {URError} `InvalidParameter` unless `dataLength` is an integer ≥ 0 and `maxFragmentLength` an integer ≥ 1.
+ */
 export function fragmentLength(dataLength: number, maxFragmentLength: number): number {
+  expectInt("dataLength", dataLength, NON_NEGATIVE);
+  expectInt("maxFragmentLength", maxFragmentLength, POSITIVE);
   return divCeil(dataLength, divCeil(dataLength, maxFragmentLength));
 }
 
 /**
  * Cut `data` into `fragmentLen`-byte fragments, zero-padding the last.
- * @throws {URError} `InvalidParameter` unless `fragmentLen` is an integer ≥ 1.
+ * @throws {URError} `InvalidParameter` unless `data` is a `Uint8Array` and `fragmentLen` an integer ≥ 1.
  */
 export function partition(data: Uint8Array, fragmentLen: number): Uint8Array<ArrayBuffer>[] {
+  expectBytes("data", data);
   expectInt("fragmentLength", fragmentLen, POSITIVE);
   const count = divCeil(data.length, fragmentLen);
   const fragments: Uint8Array<ArrayBuffer>[] = [];
@@ -69,25 +86,32 @@ export function partition(data: Uint8Array, fragmentLen: number): Uint8Array<Arr
 
 /**
  * `partition` at `fragmentLength`; an empty message has no fragments.
- * @throws {URError} `InvalidParameter` unless `maxFragmentLen` is an integer ≥ 1.
+ * @throws {URError} `InvalidParameter` unless `message` is a `Uint8Array` and `maxFragmentLen` an integer ≥ 1.
  */
 export function splitMessage(
   message: Uint8Array,
   maxFragmentLen: number,
 ): Uint8Array<ArrayBuffer>[] {
+  expectBytes("message", message);
   expectInt("maxFragmentLength", maxFragmentLen, POSITIVE);
   if (message.length === 0) return [];
   return partition(message, fragmentLength(message.length, maxFragmentLen));
 }
 
-/** `target ^= source` over `target`'s length (`source` may be shorter). */
+/**
+ * `target ^= source` over the shorter length, as the reference's `xor` zips
+ * the two slices in its release build.
+ * @throws {URError} `InvalidParameter` unless both are `Uint8Array`s.
+ */
 export function xorInto(target: Uint8Array, source: Uint8Array): void {
+  expectBytes("target", target);
+  expectBytes("source", source);
   const n = Math.min(target.length, source.length);
   for (let i = 0; i < n; i++) target[i] ^= source[i];
 }
 
-/** The fragment indices part `seqNum` mixes: itself while `seqNum ≤ seqLen`, then a seeded random subset. */
-export function chooseFragments(seqNum: number, seqLen: number, checksum: number): number[] {
+// The reference's `choose_fragments` for an already-validated part.
+function fragmentIndexes(seqNum: number, seqLen: number, checksum: number): number[] {
   if (seqNum <= seqLen) return [seqNum - 1];
   const rng = new Xoshiro256(seedFor(checksum, seqNum));
   const degree = rng.chooseDegree(seqLen);
@@ -96,17 +120,35 @@ export function chooseFragments(seqNum: number, seqLen: number, checksum: number
 }
 
 /**
+ * The fragment indices part `seqNum` mixes: itself while `seqNum ≤ seqLen`, then a seeded random subset.
+ * @throws {URError} `InvalidParameter` unless `seqNum` and `seqLen` are integers ≥ 1 and `checksum` is a `u32`.
+ */
+export function chooseFragments(seqNum: number, seqLen: number, checksum: number): number[] {
+  expectInt("seqNum", seqNum, POSITIVE);
+  expectInt("seqLen", seqLen, POSITIVE);
+  expectInt("checksum", checksum, U32);
+  return fragmentIndexes(seqNum, seqLen, checksum);
+}
+
+/**
  * XOR of the fragments at `indices`.
- * @throws {URError} `InvalidParameter` for no indices or an index with no fragment.
+ * @throws {URError} `InvalidParameter` unless `fragments` is a non-empty array of `Uint8Array`s and `indices` a non-empty array of indexes into it.
  */
 export function mixFragments(
   fragments: readonly Uint8Array[],
   indices: readonly number[],
 ): Uint8Array<ArrayBuffer> {
-  if (indices.length === 0) throw URError.invalidParameter("indices", 0, "at least one index");
+  const fragmentList: unknown = fragments;
+  if (!Array.isArray(fragmentList) || fragmentList.length === 0 || !fragmentList.every(isBytes)) {
+    throw URError.invalidParameter("fragments", fragments, "a non-empty array of Uint8Array");
+  }
+  const indexList: unknown = indices;
+  if (!Array.isArray(indexList) || indexList.length === 0) {
+    throw URError.invalidParameter("indices", indices, "a non-empty array of fragment indexes");
+  }
   const out = new Uint8Array(fragments[0].length);
-  for (const index of indices) {
-    const fragment = fragments[index];
+  for (const index of indexList as unknown[]) {
+    const fragment = isIntIn(index, NON_NEGATIVE) ? fragments[index] : undefined;
     if (fragment === undefined) {
       throw URError.invalidParameter("indices", index, `an index below ${fragments.length}`);
     }
@@ -115,52 +157,43 @@ export function mixFragments(
   return out;
 }
 
-/** Encode a part as its CBOR array. */
+/**
+ * Encode a part as its CBOR array. `seqNum`, `seqLen` and `messageLen` are
+ * written as `u32`s, truncated as the reference's `as u32` truncates them.
+ * @throws {URError} `InvalidParameter` unless the counters are integers ≥ 0, `checksum` a `u32` and `data` a `Uint8Array`.
+ */
 export function encodeFountainPart(part: FountainPart): Uint8Array<ArrayBuffer> {
-  return encodeCbor([part.seqNum, part.seqLen, part.messageLen, part.checksum, part.data]);
+  const p = expectPart(part);
+  return encodeCbor([p.seqNum >>> 0, p.seqLen >>> 0, p.messageLen >>> 0, p.checksum, p.data]);
 }
 
 /**
- * Decode a part from its CBOR array.
- * @throws {URError} `Decoder` for anything but a five-element array of four
- * `u32`s (`seqNum` ≥ 1) and a byte string.
+ * Decode a part from its CBOR array as the reference's `minicbor` decoder
+ * does: a five-element array of four `u32`s, each with a head of any width,
+ * and a definite-length byte string. Trailing bytes are ignored and a
+ * `seqNum` of 0 is accepted.
+ * @throws {URError} `InvalidParameter` for a non-`Uint8Array`; `Decoder` with the reference's text otherwise: "decode
+ * error: invalid CBOR array length", "unexpected type <type> at position
+ * <n>: expected <item>", "<value> overflows target type at position <n>:
+ * when converting u64 to u32", or "end of input bytes".
  */
 export function decodeFountainPart(bytes: Uint8Array): FountainPart {
-  let items: readonly unknown[];
+  expectBytes("bytes", bytes);
   try {
-    items = expectArray(decodeCbor(bytes));
-  } catch (error) {
-    throw URError.decoder("Invalid multipart data: expected CBOR array", error);
-  }
-  if (items.length !== 5)
-    throw URError.decoder(`Invalid multipart data: expected 5 elements, got ${items.length}`);
-  let part: FountainPart;
-  try {
-    const [a, b, c, d, e] = items as [never, never, never, never, never];
-    part = {
-      seqNum: Number(expectUnsigned(a)),
-      seqLen: Number(expectUnsigned(b)),
-      messageLen: Number(expectUnsigned(c)),
-      checksum: Number(expectUnsigned(d)),
-      data: expectBytes(e),
-    };
-  } catch (error) {
-    throw URError.decoder("Invalid multipart data", error);
-  }
-  // The reference decodes the four integers as `u32` and needs `seqNum ≥ 1`.
-  for (const [name, value, bounds] of [
-    ["seqNum", part.seqNum, U32_POSITIVE],
-    ["seqLen", part.seqLen, U32],
-    ["messageLen", part.messageLen, U32],
-    ["checksum", part.checksum, U32],
-  ] as const) {
-    if (!isIntIn(value, bounds)) {
-      throw URError.decoder(
-        `Invalid multipart data: ${name} must be in [${bounds.min}, ${bounds.max}], got ${value}`,
-      );
+    const reader = new PartReader(bytes);
+    if (reader.array() !== 5n) {
+      throw new PartCborError("decode error: invalid CBOR array length");
     }
+    const seqNum = reader.u32();
+    const seqLen = reader.u32();
+    const messageLen = reader.u32();
+    const checksum = reader.u32();
+    const data = Uint8Array.from(reader.bytes());
+    return { seqNum, seqLen, messageLen, checksum, data };
+  } catch (error) {
+    if (error instanceof PartCborError) throw URError.decoder(error.message, error);
+    throw error;
   }
-  return part;
 }
 
 /**
@@ -177,20 +210,28 @@ export class FountainEncoder implements Iterable<FountainPart> {
   #seqNum = 0;
 
   /**
-   * Fragments of at most `maxFragmentLen` bytes.
-   * @throws {URError} `InvalidParameter` for an empty message or unless
-   * `maxFragmentLen` is an integer ≥ 1.
+   * Fragments of at most `maxFragmentLen` bytes. The length is the
+   * reference's `usize`: a safe integer `number`, or a `bigint` up to
+   * 2⁶⁴ − 1 (a `number` of 2⁵³ or more is not accepted, as it may already
+   * have been rounded).
+   * @throws {URError} In the reference's order: `Decoder` for an empty
+   * message ("expected non-empty message") and for a length of 0 ("expected
+   * positive maximum fragment length"); `InvalidParameter` unless `message`
+   * is a `Uint8Array` and the length is in the domain above.
    */
-  constructor(message: Uint8Array, maxFragmentLen: number) {
-    // The `ur` crate's `fountain::Encoder::new`, in its order: an empty
-    // message is `EmptyMessage`, a zero length `InvalidFragmentLen` (both
-    // `Error::UR` = `Decoder`); the rest of the JS domain is `InvalidParameter`.
+  constructor(message: Uint8Array, maxFragmentLen: number | bigint) {
+    expectBytes("message", message);
     if (message.length === 0) throw URError.decoder("expected non-empty message");
-    if (maxFragmentLen === 0) throw URError.decoder("expected positive maximum fragment length");
-    expectInt("maxFragmentLength", maxFragmentLen, POSITIVE);
+    if (maxFragmentLen === 0 || maxFragmentLen === 0n) {
+      throw URError.decoder("expected positive maximum fragment length");
+    }
+    const max = expectUsize("maxFragmentLength", maxFragmentLen, 1n);
+    // `fragment_length(len, max)` is `len` whenever `max ≥ len`, so the
+    // computation stays within `number` precision for any `max`.
+    const effective = Number(max < BigInt(message.length) ? max : BigInt(message.length));
     this.#messageLen = message.length;
     this.#checksum = crc32(message);
-    this.#fragments = partition(message, fragmentLength(message.length, maxFragmentLen));
+    this.#fragments = partition(message, fragmentLength(message.length, effective));
   }
 
   /** Number of fragments; parts beyond it are mixtures. */
@@ -216,7 +257,7 @@ export class FountainEncoder implements Iterable<FountainPart> {
   /** The next part: a plain fragment while `seqNum ≤ partCount`, then a mixture. */
   nextPart(): FountainPart {
     this.#seqNum++;
-    const indices = chooseFragments(this.#seqNum, this.partCount, this.#checksum);
+    const indices = fragmentIndexes(this.#seqNum, this.partCount, this.#checksum);
     return {
       seqNum: this.#seqNum,
       seqLen: this.partCount,
@@ -237,139 +278,192 @@ export class FountainEncoder implements Iterable<FountainPart> {
   }
 }
 
-interface MixedPart {
-  readonly indices: readonly number[];
+/**
+ * The fragment index a part with `seqNum` 0 lands on. The reference computes
+ * `sequence - 1`, which wraps to `usize::MAX` in its release build; the
+ * decoder counts that index but never exposes it.
+ */
+const WRAPPED_INDEX = -1;
+const WRAPPED_INDEX_KEY = "18446744073709551615";
+
+/** Indexes in generated order as one key; the reference keys its sets by `Vec<usize>`. */
+const keyOf = (indexes: readonly number[]): string =>
+  indexes.map((i) => (i === WRAPPED_INDEX ? WRAPPED_INDEX_KEY : String(i))).join(",");
+
+/** `BTreeMap<Vec<usize>>` key order: element-wise, a prefix before a longer key. */
+function compareIndexes(a: readonly number[], b: readonly number[]): number {
+  const ordinal = (i: number): number => (i === WRAPPED_INDEX ? Number.POSITIVE_INFINITY : i);
+  const n = Math.min(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    if (a[i] !== b[i]) return ordinal(a[i]) < ordinal(b[i]) ? -1 : 1;
+  }
+  return a.length - b.length;
+}
+
+interface BufferedPart {
+  readonly indexes: readonly number[];
   readonly data: Uint8Array;
 }
 
 /**
- * Reassembles a message from parts in any order. Every mixed part is kept
- * and re-reduced whenever a plain fragment appears, so completion never
- * needs more parts than the reference decoder.
+ * Reassembles a message from parts in any order, exactly as the reference's
+ * `ur::fountain::Decoder` does: a mixed part is reduced against the
+ * fragments known when it arrives and then buffered; a buffered part is
+ * reduced further only when a later *simple* part (or a fragment derived
+ * while processing one) arrives, so completion can need more parts than a
+ * decoder that re-reduces its buffer after every part. A later simple part
+ * replaces a fragment derived earlier, and the reassembled message is not
+ * checked against the parts' checksum field.
  */
 export class FountainDecoder {
-  #seqLen: number | undefined;
-  #messageLen: number | undefined;
-  #checksum: number | undefined;
-  #fragmentLen: number | undefined;
-  readonly #pure = new Map<number, Uint8Array>();
-  readonly #mixed = new Map<number, MixedPart>();
-  readonly #seen = new Set<string>();
+  readonly #decoded = new Map<number, Uint8Array>();
+  readonly #received = new Set<string>();
+  readonly #buffer = new Map<string, BufferedPart>();
+  readonly #queue: { index: number; data: Uint8Array }[] = [];
+  #sequenceCount = 0;
+  #messageLength = 0;
+  #checksum = 0;
+  #fragmentLength = 0;
+  #result: Uint8Array<ArrayBuffer> | URError | undefined;
 
   /**
-   * Feed a part. Returns whether it added information (false once done or
-   * for a repeated index set).
-   * @throws {URError} `InvalidParameter` unless the four integer fields are
-   * `u32`s with `seqNum ≥ 1`; `Decoder` for an empty part or one
-   * inconsistent with the first.
+   * Feed a part. Returns whether it added information: `false` once done
+   * and for a repeated index set. The part's `data` is copied, never kept.
+   * @throws {URError} `InvalidParameter` unless `part` is an object whose
+   * `seqNum`, `seqLen` and `messageLen` are non-negative safe integers,
+   * `checksum` a `u32` and `data` a `Uint8Array`; `Decoder` for an empty part ("expected non-empty part") or one
+   * inconsistent with the first ("part is inconsistent with previous ones").
    */
   add(part: FountainPart): boolean {
+    const p = expectPart(part);
+    const data = Uint8Array.from(p.data);
     if (this.done) return false;
-    expectPartFields(part);
-    if (part.seqLen === 0 || part.data.length === 0 || part.messageLen === 0) {
+    if (p.seqLen === 0 || data.length === 0 || p.messageLen === 0) {
       throw URError.decoder("expected non-empty part");
     }
-    if (this.#seqLen === undefined) {
-      this.#seqLen = part.seqLen;
-      this.#messageLen = part.messageLen;
-      this.#checksum = part.checksum;
-      this.#fragmentLen = part.data.length;
+    if (this.#received.size === 0) {
+      this.#sequenceCount = p.seqLen;
+      this.#messageLength = p.messageLen;
+      this.#checksum = p.checksum;
+      this.#fragmentLength = data.length;
     } else if (
-      part.seqLen !== this.#seqLen ||
-      part.messageLen !== this.#messageLen ||
-      part.checksum !== this.#checksum ||
-      part.data.length !== this.#fragmentLen
+      p.seqLen !== this.#sequenceCount ||
+      p.messageLen !== this.#messageLength ||
+      p.checksum !== this.#checksum ||
+      data.length !== this.#fragmentLength
     ) {
       throw URError.decoder("part is inconsistent with previous ones");
     }
-    const indices = chooseFragments(part.seqNum, this.#seqLen, this.#checksum ?? 0);
-    const key = [...indices].sort((a, b) => a - b).join(",");
-    if (this.#seen.has(key)) return false;
-    this.#seen.add(key);
-    if (indices.length === 1) {
-      const index = indices[0];
-      if (!this.#pure.has(index)) this.#pure.set(index, part.data);
-    } else {
-      this.#mixed.set(part.seqNum, { indices, data: part.data });
-    }
-    this.#reduce();
+    const indexes = fragmentIndexes(p.seqNum, this.#sequenceCount, this.#checksum);
+    const key = keyOf(indexes);
+    if (this.#received.has(key)) return false;
+    this.#received.add(key);
+    if (indexes.length === 1) this.#processSimple(indexes[0], data);
+    else this.#processComplex(indexes, data);
     return true;
   }
 
-  // Peel: any mixed part with all but one index known yields that fragment;
-  // repeat until nothing changes.
-  #reduce(): void {
-    let progress = true;
-    while (progress) {
-      progress = false;
-      for (const [seqNum, mixed] of this.#mixed) {
-        const reduced = new Uint8Array(mixed.data);
-        const missing: number[] = [];
-        for (const index of mixed.indices) {
-          const pure = this.#pure.get(index);
-          if (pure === undefined) missing.push(index);
-          else xorInto(reduced, pure);
-        }
-        if (missing.length === 0) {
-          this.#mixed.delete(seqNum);
-          progress = true;
-        } else if (missing.length === 1) {
-          this.#pure.set(missing[0], reduced);
-          this.#mixed.delete(seqNum);
-          progress = true;
+  #processSimple(index: number, data: Uint8Array): void {
+    this.#decoded.set(index, data);
+    this.#queue.push({ index, data });
+    this.#processQueue();
+  }
+
+  // Pops simple parts (last in, first out) and reduces every buffered part
+  // that contains the index, in key order; a part left with one index is
+  // decoded and queued in turn.
+  #processQueue(): void {
+    for (let next = this.#queue.pop(); next !== undefined; next = this.#queue.pop()) {
+      const { index, data: simple } = next;
+      const toProcess = [...this.#buffer.values()]
+        .filter((b) => b.indexes.includes(index))
+        .sort((a, b) => compareIndexes(a.indexes, b.indexes));
+      for (const buffered of toProcess) {
+        this.#buffer.delete(keyOf(buffered.indexes));
+        const indexes = [...buffered.indexes];
+        indexes.splice(indexes.indexOf(index), 1);
+        xorInto(buffered.data, simple);
+        if (indexes.length === 1) {
+          this.#decoded.set(indexes[0], buffered.data);
+          this.#queue.push({ index: indexes[0], data: buffered.data });
+        } else {
+          this.#buffer.set(keyOf(indexes), { indexes, data: buffered.data });
         }
       }
     }
   }
 
-  /** Whether every fragment has been recovered; `result` is then defined or throws. */
-  get done(): boolean {
-    return this.#seqLen !== undefined && this.#pure.size === this.#seqLen;
+  // Reduces a mixed part against the fragments decoded so far; the queue is
+  // not drained here.
+  #processComplex(indexes: readonly number[], data: Uint8Array): void {
+    const remaining = [...indexes];
+    const toRemove = indexes.filter((i) => this.#decoded.has(i));
+    if (remaining.length === toRemove.length) return;
+    for (const remove of toRemove) {
+      remaining.splice(remaining.indexOf(remove), 1);
+      const fragment = this.#decoded.get(remove);
+      if (fragment !== undefined) xorInto(data, fragment);
+    }
+    if (remaining.length === 1) {
+      this.#decoded.set(remaining[0], data);
+      this.#queue.push({ index: remaining[0], data });
+    } else {
+      this.#buffer.set(keyOf(remaining), { indexes: remaining, data });
+    }
   }
 
-  /** Fraction of fragments recovered. */
+  /** Whether as many fragments are decoded as the message has; `result` is then defined or throws. */
+  get done(): boolean {
+    return this.#messageLength !== 0 && this.#decoded.size === this.#sequenceCount;
+  }
+
+  /** Fraction of the message's fragments decoded. */
   get progress(): number {
-    return this.#seqLen === undefined ? 0 : this.#pure.size / this.#seqLen;
+    if (this.#sequenceCount === 0) return 0;
+    let decoded = 0;
+    for (const i of this.#decoded.keys()) if (i >= 0 && i < this.#sequenceCount) decoded++;
+    return Math.min(1, decoded / this.#sequenceCount);
   }
 
   /**
-   * The message once `done`, else `undefined`.
-   * @throws {URError} `Decoder` when the fragments do not cover `messageLen`,
-   * when the bytes past `messageLen` are not all zero ("invalid padding", as
-   * the reference), or when the reassembled bytes fail the checksum.
+   * The message once `done`, else `undefined`: the decoded fragments in
+   * order, cut to `messageLen`. The decoder does not change once done, so
+   * the first outcome is kept and returned (or thrown) again.
+   * @throws {URError} `Decoder` when a fragment in `0..seqLen` is missing or
+   * the fragments do not cover `messageLen` ("expected item"), or when a
+   * byte past `messageLen` is not zero ("invalid padding").
    */
   get result(): Uint8Array<ArrayBuffer> | undefined {
-    if (!this.done || this.#seqLen === undefined || this.#messageLen === undefined)
-      return undefined;
-    const fragmentLen = this.#fragmentLen ?? 0;
-    if (this.#seqLen * fragmentLen < this.#messageLen) {
-      throw URError.decoder("message length exceeds the fragments");
+    if (!this.done) return undefined;
+    this.#result ??= this.#message();
+    if (this.#result instanceof URError) throw this.#result;
+    return this.#result.slice();
+  }
+
+  #message(): Uint8Array<ArrayBuffer> | URError {
+    const combined = new Uint8Array(this.#sequenceCount * this.#fragmentLength);
+    for (let i = 0; i < this.#sequenceCount; i++) {
+      const fragment = this.#decoded.get(i);
+      if (fragment === undefined) return URError.decoder("expected item");
+      combined.set(fragment, i * this.#fragmentLength);
     }
-    const out = new Uint8Array(this.#messageLen);
-    // Once `done`, `#pure` holds exactly the indices `0..seqLen-1`.
-    for (const [i, fragment] of this.#pure) {
-      const start = i * fragmentLen;
-      const take = Math.min(fragmentLen, this.#messageLen - start);
-      out.set(fragment.subarray(0, take), start);
-      for (let j = take; j < fragment.length; j++) {
-        if (fragment[j] !== 0) throw URError.decoder("invalid padding");
-      }
+    if (this.#messageLength > combined.length) return URError.decoder("expected item");
+    for (let i = this.#messageLength; i < combined.length; i++) {
+      if (combined[i] !== 0) return URError.decoder("invalid padding");
     }
-    const actual = crc32(out);
-    if (actual !== this.#checksum) {
-      throw URError.decoder(`Checksum mismatch: expected ${this.#checksum}, got ${actual}`);
-    }
-    return out;
+    return combined.slice(0, this.#messageLength);
   }
 
   /** Forget every part received. */
   reset(): void {
-    this.#seqLen = undefined;
-    this.#messageLen = undefined;
-    this.#checksum = undefined;
-    this.#fragmentLen = undefined;
-    this.#pure.clear();
-    this.#mixed.clear();
-    this.#seen.clear();
+    this.#decoded.clear();
+    this.#received.clear();
+    this.#buffer.clear();
+    this.#queue.length = 0;
+    this.#sequenceCount = 0;
+    this.#messageLength = 0;
+    this.#checksum = 0;
+    this.#fragmentLength = 0;
+    this.#result = undefined;
   }
 }

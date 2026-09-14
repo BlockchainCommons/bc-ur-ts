@@ -5,8 +5,8 @@
  * @module bytewords-tables
  */
 
-/** Byteword for each byte value; four letters, unique first+last pair. */
-export const BYTEWORDS: readonly string[] = [
+/** Byteword for each byte value; four letters, unique first+last pair. Frozen: the tables are wire. */
+export const BYTEWORDS: readonly string[] = Object.freeze([
   "able",
   "acid",
   "also",
@@ -263,10 +263,10 @@ export const BYTEWORDS: readonly string[] = [
   "zinc",
   "zone",
   "zoom",
-];
+]);
 
-/** Bytemoji for each byte value. */
-export const BYTEMOJIS: readonly string[] = [
+/** Bytemoji for each byte value. Frozen: the tables are wire. */
+export const BYTEMOJIS: readonly string[] = Object.freeze([
   "😀",
   "😂",
   "😆",
@@ -523,4 +523,4 @@ export const BYTEMOJIS: readonly string[] = [
   "🐟",
   "🐬",
   "🐳",
-];
+]);

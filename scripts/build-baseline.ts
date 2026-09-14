@@ -1,5 +1,5 @@
 /**
- * Build the frozen pre-redesign baseline bundle.
+ * Build the frozen baseline bundle of the first implementation.
  * Requires the historical source revision and compatible sibling baselines.
  *
  *   bun scripts/build-baseline.ts
@@ -7,7 +7,7 @@
  * Bundles src/index.ts as a single ESM file with every @blockchaincommons
  * sibling INLINED, resolving each sibling to ITS frozen baseline bundle
  * (../<repo>/tests/baseline/<pkg>-baseline.mjs) when one exists, so the
- * baseline keeps the pre-redesign behaviour of its dependencies even after
+ * baseline keeps the behaviour of its dependencies at that commit even after
  * they change. Writes tests/baseline/<pkg>-baseline.mjs, the .d.mts API
  * snapshot, and README.md with the commit and sha256 pinned.
  */
@@ -43,7 +43,7 @@ for (const dir of readdirSync(parent)) {
   const f = `${depName.replace("@blockchaincommons/", "")}-baseline.mjs`;
   if (!existsSync(join(bl, f))) continue;
   // The canonical dcbor is a published, stable dependency: never alias it to
-  // its own (much older) pre-redesign baseline.
+  // its own (much older) frozen baseline.
   if (depName !== pkg.name && depName !== "@blockchaincommons/dcbor") alias[depName] = join(bl, f);
 }
 
@@ -77,10 +77,10 @@ writeFileSync(
   `# Frozen baseline build
 
 \`${short}-baseline.mjs\` is the self-contained ESM bundle of \`${pkg.name}\` built from
-commit \`${commit}\`, the pre-redesign wire-format reference. Sibling
+commit \`${commit}\`, the first implementation's wire-format reference. Sibling
 \`@blockchaincommons/*\` packages are INLINED from their own frozen baseline
 bundles (${Object.keys(alias).length ? Object.keys(alias).join(", ") : "none"}), so this bundle keeps the
-pre-redesign behaviour of its dependencies after they change.
+behaviour of its dependencies at that commit after they change.
 \`${short}-baseline.d.mts\` is the public surface at that commit.
 
 \`tests/differential.test.ts\` runs every corpus recipe through this bundle and
