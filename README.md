@@ -85,6 +85,7 @@ Runnable examples live in the [`examples/`](https://github.com/BlockchainCommons
 
 ### Version History
 
+- **1.0.0-beta.5 (October 19, 2026)** - Installs with npm on a host without Bun: the TypeScript 6 pin for the lint tools runs from `prepare`, not `postinstall` ([bc-components-ts#11](https://github.com/BlockchainCommons/bc-components-ts/issues/11)).
 - **1.0.0-beta.3 (September 14, 2026)** - Decoding follows the reference's `ur` crate in full: fountain completion, no CRC-32 check on reassembly, `seqNum` 0, minicbor part CBOR and messages, a case-sensitive `MultipartDecoder` that validates after completion, `UR.parse` in the reference order with `Decoder` for bytewords failures, the empty UR type, `decodeURWith` on the first tag only with a dcbor `CborError` for a wrong type, ASCII-only `canonicalizeByteword`, frozen tables, argument validation on every export, and a `bigint` `maxFragmentLength`.
 - **1.0.0-beta.2 (September 12, 2026)** - Decoding follows the reference: `bytewords` decoding is case-sensitive, `MultipartDecoder` rejects single-part URs and reads the fountain fields from the CBOR (the header is parsed as two `u16`s, a leading `+` allowed), and a zero `maxFragmentLength` reports the reference's decoder error.
 - **1.0.0-beta.1 (September 9, 2026)** - Initial beta implementation.
